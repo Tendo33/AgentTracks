@@ -1,0 +1,15 @@
+# AgentTracks 项目说明
+
+首先，确保你已经安装了 `uv` 包管理工具。如果尚未安装，可以通过以下命令安装：
+
+```bash
+pip install uv
+```
+
+然后，克隆本项目并安装依赖：
+
+```bash
+git clone https://github.com/yourusername/AgentLog.git
+cd AgentLog
+uv sync
+```
