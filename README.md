@@ -13,3 +13,10 @@ git clone https://github.com/Tendo33/AgentTracks.git
 cd AgentLog
 uv sync
 ```
+
+新建一个 .env file, 并添加你的 OpenAI API 密钥和 API 基础地址。
+
+```bash
+OPENAI_API_KEY="xxx"
+OPENAI_API_BASE="xxx"
+```
