@@ -9,7 +9,7 @@ pip install uv
 然后，克隆本项目并安装依赖：
 
 ```bash
-git clone https://github.com/yourusername/AgentLog.git
+git clone https://github.com/Tendo33/AgentTracks.git
 cd AgentLog
 uv sync
 ```
