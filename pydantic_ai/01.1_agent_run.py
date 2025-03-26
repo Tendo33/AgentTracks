@@ -40,17 +40,19 @@ agent = initialize_agent()
 
 # 同步方式运行 Agent
 result_sync = agent.run_sync("What is the capital of Italy?")
-print(result_sync.data)  # 输出: Rome
+print(result_sync.data)
+print("========================================================")
+print(result_sync.usage())
 
 
 async def main():
-    """异步方式运行 Agent"""
+    #异步方式运行 Agent
     result = await agent.run("What is the capital of France?")
-    print(result.data)  # 输出: Paris
+    print(result.data)
 
     # 使用流式方式运行 Agent
     async with agent.run_stream("What is the capital of the UK?") as response:
-        print(await response.get_data())  # 输出: London
+        print(await response.get_data())
 
 
 async def agent_iter_async_for():
@@ -64,7 +66,6 @@ async def agent_iter_async_for():
     print(nodes)
     print("========================================================")
     print(agent_run.result.data)  # 输出: Paris
-
 
 async def agent_iter_next():
     """使用 next 方法手动驱动 Agent 的迭代"""
