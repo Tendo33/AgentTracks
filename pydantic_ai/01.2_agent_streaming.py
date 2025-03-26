@@ -128,11 +128,20 @@ async def main():
                 # Once an End node is reached, the agent run is complete
                 output_messages.append(f"=== Final Agent Output: {run.result.data} ===")
 
+async def main2():
+    user_prompt = "What will the weather be like in Paris on Tuesday?"
 
+    # Begin a node-by-node, streaming iteration
+    async with weather_agent.iter(user_prompt, deps=WeatherService()) as run:
+        async for node in run:
+            print(node)
+            print("==============================================")
+            if Agent.is_end_node(node):
+                pass
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main2())
 
-    print(output_messages)
+    #print(output_messages)
     a = [
         "=== ModelRequestNode: streaming partial request tokens ===",
         "[Request] Starting part 0: TextPart(content='', part_kind='text')",
