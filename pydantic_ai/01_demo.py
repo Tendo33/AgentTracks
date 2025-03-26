@@ -10,6 +10,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 def setup_environment():
     """加载环境变量并配置日志"""
+    # 'if-token-present' means nothing will be sent (and the example will work) if you don't have logfire configured
     logfire.configure(send_to_logfire="if-token-present")
     load_dotenv()
     return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
