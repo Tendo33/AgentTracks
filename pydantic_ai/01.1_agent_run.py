@@ -18,7 +18,7 @@ def setup_environment():
 
 
 def create_openai_model(
-    api_key: str, base_url: str, model_name: str = "Hs-Deepseek-v3"
+    api_key: str, base_url: str, model_name: str = "deepseek-v3-250324"
 ) -> OpenAIModel:
     """创建 OpenAI 模型实例"""
     provider = OpenAIProvider(api_key=api_key, base_url=base_url)

@@ -13,7 +13,7 @@ OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
 logfire.configure(send_to_logfire="if-token-present")
 
 model = OpenAIModel(
-    "Hs-Deepseek-v3",
+    "deepseek-v3-250324",
     provider=OpenAIProvider(api_key=OPENAI_API_KEY, base_url=OPENAI_API_BASE),
 )
 
