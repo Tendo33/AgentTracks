@@ -167,10 +167,13 @@ async def main():
             client=client, weather_api_key=weather_api_key, geo_api_key=geo_api_key
         )
         result = await weather_agent.run(
-            "What is the weather like in London and in Wiltshire?", deps=deps
+            "What is the weather like in Beijing and in Qingdao?", deps=deps
         )
         debug(result)
+        print("=====================================================================")
         print("Response:", result.data)
+        print("=====================================================================")
+        print(result.all_messages())
 
 
 if __name__ == "__main__":
