@@ -41,7 +41,7 @@ agent_tavily = Agent(
 agent_duck = Agent(
     model=model,
     tools=[duckduckgo_search_tool()],
-    system_prompt="Search tavily for the given query and return the results.",
+    system_prompt="Search duckduckgo for the given query and return the results.",
 )
 
 result = agent_tavily.run_sync(
