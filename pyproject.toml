@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "chainlit>=2.4.301",
+    "devtools>=0.12.2",
     "fastapi[all]>=0.115.12",
     "logfire>=3.10.0",
     "openai-agents>=0.0.6",
