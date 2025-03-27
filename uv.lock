@@ -14,7 +14,7 @@ dependencies = [
     { name = "chainlit" },
     { name = "devtools" },
     { name = "fastapi", extra = ["all"] },
-    { name = "logfire" },
+    { name = "logfire", extra = ["fastapi"] },
     { name = "openai-agents" },
     { name = "pydantic-ai" },
     { name = "pydantic-ai-slim", extra = ["duckduckgo", "logfire", "openai", "tavily"] },
@@ -25,7 +25,7 @@ requires-dist = [
     { name = "chainlit", specifier = ">=2.4.301" },
     { name = "devtools", specifier = ">=0.12.2" },
     { name = "fastapi", extras = ["all"], specifier = ">=0.115.12" },
-    { name = "logfire", specifier = ">=3.10.0" },
+    { name = "logfire", extras = ["fastapi"], specifier = ">=3.10.0" },
     { name = "openai-agents", specifier = ">=0.0.6" },
     { name = "pydantic-ai", specifier = ">=0.0.43" },
     { name = "pydantic-ai-slim", extras = ["duckduckgo", "logfire", "openai", "tavily"], specifier = ">=0.0.46" },
@@ -174,6 +174,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/0a/35/aacd2207c79d95e4ace44292feedff8fccfd8b48135f42d84893c24cc39b/argcomplete-3.6.1.tar.gz", hash = "sha256:927531c2fbaa004979f18c2316f6ffadcfc5cc2de15ae2624dfe65deaf60e14f", size = 73474 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f5/c8/9fa0e6fa97c328d44e089278399b0a1a08268b06a4a71f7448c6b6effb9f/argcomplete-3.6.1-py3-none-any.whl", hash = "sha256:cef54d7f752560570291214f0f1c48c3b8ef09aca63d65de7747612666725dbc", size = 43984 },
+]
+
+[[package]]
+name = "asgiref"
+version = "3.8.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/38/b3395cc9ad1b56d2ddac9970bc8f4141312dbaec28bc7c218b0dfafd0f42/asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590", size = 35186 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/39/e3/893e8757be2612e6c266d9bb58ad2e3651524b5b40cf56761e985a28b13e/asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47", size = 23828 },
 ]
 
 [[package]]
@@ -996,6 +1005,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/66/64/8bfc71ef2fa44190e7a8b10c3aabddf72df2944a0bce04bbe27a500566ac/logfire-3.11.0-py3-none-any.whl", hash = "sha256:bd20e697030510cfc834b1805945b1ad62ac057679d01d13579ed2f454f0e979", size = 190143 },
 ]
 
+[package.optional-dependencies]
+fastapi = [
+    { name = "opentelemetry-instrumentation-fastapi" },
+]
+
 [[package]]
 name = "logfire-api"
 version = "3.11.0"
@@ -1433,6 +1447,22 @@ wheels = [
 ]
 
 [[package]]
+name = "opentelemetry-instrumentation-asgi"
+version = "0.52b1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-util-http" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/db/79bdc2344b38e60fecc7e99159a3f5b4c0e1acec8de305fba0a713cc3692/opentelemetry_instrumentation_asgi-0.52b1.tar.gz", hash = "sha256:a6dbce9cb5b2c2f45ce4817ad21f44c67fd328358ad3ab911eb46f0be67f82ec", size = 24203 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/de/39ec078ae94a365d2f434b7e25886c267864aca5695b48fa5b60f80fbfb3/opentelemetry_instrumentation_asgi-0.52b1-py3-none-any.whl", hash = "sha256:f7179f477ed665ba21871972f979f21e8534edb971232e11920c8a22f4759236", size = 16338 },
+]
+
+[[package]]
 name = "opentelemetry-instrumentation-bedrock"
 version = "0.39.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1492,6 +1522,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/f2/20a33efa197132c7c312817785a4a746db4277e431d85d86908d7f8b8cdc/opentelemetry_instrumentation_crewai-0.39.0.tar.gz", hash = "sha256:7dcf2ac928520cd9461f9a58657aa5aaf73250343bb436d29fce401416461faf", size = 4531 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/7d/fcdc7048868bd2dfa90b2bccc6f2e751541062e625677537c49059ccadc9/opentelemetry_instrumentation_crewai-0.39.0-py3-none-any.whl", hash = "sha256:2b1a73e76fb4cf5f1668fe95276ab87be64111a3545fadb05b6d39865b17c30e", size = 6066 },
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-fastapi"
+version = "0.52b1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-instrumentation-asgi" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-util-http" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/30/01/d159829077f2795c716445df6f8edfdd33391e82d712ba4613fb62b99dc5/opentelemetry_instrumentation_fastapi-0.52b1.tar.gz", hash = "sha256:d26ab15dc49e041301d5c2571605b8f5c3a6ee4a85b60940338f56c120221e98", size = 19247 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/89/acef7f625b218523873e32584dc5243d95ffa4facba737fd8b854c049c58/opentelemetry_instrumentation_fastapi-0.52b1-py3-none-any.whl", hash = "sha256:73c8804f053c5eb2fd2c948218bff9561f1ef65e89db326a6ab0b5bf829969f4", size = 12114 },
 ]
 
 [[package]]

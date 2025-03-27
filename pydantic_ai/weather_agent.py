@@ -28,9 +28,11 @@ from rich import print
 
 def setup_environment():
     """加载环境变量并配置日志"""
-    # 'if-token-present' 表示如果没有配置 logfire，不会发送日志信息
-    logfire.configure(send_to_logfire="if-token-present")
     load_dotenv()
+    logfire_token = os.getenv("LOGFIRE_TOKEN")
+    # 'if-token-present' 表示如果没有配置 logfire，不会发送日志信息
+    logfire.configure(token=logfire_token, send_to_logfire="if-token-present")
+    
     return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
 
 
