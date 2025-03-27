@@ -52,6 +52,7 @@ class WeatherService:
 api_key, base_url = setup_environment()
 model = create_openai_model(api_key, base_url)
 
+# 这个泛型是怎么泛的？
 weather_agent = Agent[WeatherService, str](
     model=model,
     deps_type=WeatherService,

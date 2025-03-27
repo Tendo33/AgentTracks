@@ -41,6 +41,7 @@ agent = Agent(
     deps_type=MyDeps,
 )
 
+
 @agent.system_prompt
 async def get_system_prompt(ctx: RunContext[MyDeps]) -> str:
     response = await ctx.deps.http_client.get(
@@ -49,6 +50,8 @@ async def get_system_prompt(ctx: RunContext[MyDeps]) -> str:
     )
     response.raise_for_status()
     return f"Prompt: {response.text}"
+
+
 async def main():
     async with httpx.AsyncClient() as client:
         deps = MyDeps("foobar", client)
@@ -57,13 +60,7 @@ async def main():
             deps=deps,
         )
         print(result.data)
-
-async def main2():
-    async with httpx.AsyncClient() as client:
-        deps = MyDeps("foobar", client)
-        result = await agent.run("Tell me a joke.", deps=deps)
-        print(result.data)
-        # > Did you hear about the toothpaste scandal? They called it Colgate.
+# 在 weather agent 例子中重新看
 
 if __name__ == "__main__":
     asyncio.run(main())
