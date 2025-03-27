@@ -7,6 +7,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_graph import End
+from rich import print
 
 
 def setup_environment():

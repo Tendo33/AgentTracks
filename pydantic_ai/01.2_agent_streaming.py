@@ -18,6 +18,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.tools import RunContext
+from rich import print
 
 
 def setup_environment():

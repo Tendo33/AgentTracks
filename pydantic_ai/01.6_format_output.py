@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
+from rich import print
 
 
 def setup_environment():
@@ -47,6 +48,11 @@ agent: Agent[None, Union[Box, str]] = Agent(
 
 result = agent.run_sync("The box is 10x20x30")
 print(result.data)
+print("==============================================")
+print(result.all_messages())
+print("==============================================")
 
 result = agent.run_sync("The box is 10x20x30 cm")
 print(result.data)
+print("==============================================")
+print(result.all_messages())

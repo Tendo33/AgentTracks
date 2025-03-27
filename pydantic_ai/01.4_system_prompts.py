@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
+from rich import print
 
 """
 一般来说，系统提示可以分为两大类：
