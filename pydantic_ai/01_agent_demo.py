@@ -56,7 +56,9 @@ def main():
     model = create_openai_model(api_key, base_url)
 
     # 3. 创建第一个 Agent（简单回答）
-    simple_agent = Agent(model, system_prompt="Be concise, reply with one sentence.")
+    simple_agent = Agent(
+        model, system_prompt="Be concise, reply with one sentence.", instrument=True
+    )
     run_agent_with_simple_prompt(simple_agent, 'Where does "hello world" come from?')
 
     # 4. 创建第二个 Agent（结构化输出）
