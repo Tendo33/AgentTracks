@@ -53,6 +53,60 @@ def add_the_date() -> str:
     return f"The date is {date.today()}."
 
 
-result = agent.run_sync("What is the date?", deps="Frank")
+result = agent.run_sync("What is the date?,然后给我将一个故事", deps="Frank")
 print(result.data)
+print("=======================================================================")
 print(result.all_messages())
+'''
+result.all_messages() = [
+    ModelRequest(
+        parts=[
+            SystemPromptPart(
+                content="Use the customer's name while replying to them.",
+                timestamp=datetime.datetime(
+                    2025, 3, 27, 3, 35, 14, 36659, tzinfo=datetime.timezone.utc
+                ),
+                dynamic_ref=None,
+                part_kind="system-prompt",
+            ),
+            SystemPromptPart(
+                content="The user's name is Frank.",
+                timestamp=datetime.datetime(
+                    2025, 3, 27, 3, 35, 14, 38201, tzinfo=datetime.timezone.utc
+                ),
+                dynamic_ref=None,
+                part_kind="system-prompt",
+            ),
+            SystemPromptPart(
+                content="The date is 2025-03-27.",
+                timestamp=datetime.datetime(
+                    2025, 3, 27, 3, 35, 14, 38486, tzinfo=datetime.timezone.utc
+                ),
+                dynamic_ref=None,
+                part_kind="system-prompt",
+            ),
+            UserPromptPart(
+                content="What is the date?",
+                timestamp=datetime.datetime(
+                    2025, 3, 27, 3, 35, 14, 38490, tzinfo=datetime.timezone.utc
+                ),
+                part_kind="user-prompt",
+            ),
+        ],
+        kind="request",
+    ),
+    ModelResponse(
+        parts=[
+            TextPart(
+                content="Today's date is March 27, 2025, Frank. Let me know if you need anything else!",
+                part_kind="text",
+            )
+        ],
+        model_name="deepseek-v3-250324",
+        timestamp=datetime.datetime(
+            2025, 3, 27, 3, 35, 14, tzinfo=datetime.timezone.utc
+        ),
+        kind="response",
+    ),
+]
+'''
