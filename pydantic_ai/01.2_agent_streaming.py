@@ -5,6 +5,8 @@ from datetime import date
 
 import logfire
 from dotenv import load_dotenv
+from rich import print
+
 from pydantic_ai import Agent
 from pydantic_ai.messages import (
     FinalResultEvent,
@@ -18,7 +20,6 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.tools import RunContext
-from rich import print
 
 
 def setup_environment():
@@ -143,8 +144,18 @@ async def main2():
                 pass
 
 
+
+agent = Agent(model=model,result_type=str)
+
+# stream = True 的流式返回
+async def main3():
+    async with agent.run_stream('Where does "hello world" come from?') as result:
+        # delta=True 是传统的流式，如果为False，那每一次都会输出前面的句子
+        async for message in result.stream_text(delta=True):
+            print(message,end="")
+
 if __name__ == "__main__":
-    asyncio.run(main2())
+    asyncio.run(main3())
 
     # print(output_messages)
     a = [

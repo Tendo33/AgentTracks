@@ -4,10 +4,11 @@ from typing import Union
 import logfire
 from dotenv import load_dotenv
 from pydantic import BaseModel
+from rich import print
+
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
-from rich import print
 
 
 def setup_environment():
@@ -42,7 +43,7 @@ agent: Agent[None, Union[Box, str]] = Agent(
     result_type=Union[Box, str],
     system_prompt=(
         "Extract me the dimensions of a box, "
-        "if you can't extract all data, ask the user to try again."
+        "if you can't extract all data, ask the user to try again.不要自己编造"
     ),
     instrument=True
 )
