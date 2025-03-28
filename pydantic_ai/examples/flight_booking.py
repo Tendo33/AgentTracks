@@ -17,9 +17,11 @@ from rich.prompt import Prompt
 
 def setup_environment():
     """加载环境变量并配置日志"""
-    # 'if-token-present' 表示如果没有配置 logfire，不会发送日志信息
-    logfire.configure(send_to_logfire="if-token-present")
     load_dotenv()
+    logfire_token = os.getenv("LOGFIRE_TOKEN")
+    # 'if-token-present' 表示如果没有配置 logfire，不会发送日志信息
+    logfire.configure(token=logfire_token, send_to_logfire="if-token-present")
+
     return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
 
 
@@ -49,6 +51,15 @@ class NoFlightFound(BaseModel):
     """When no valid flight is found."""
 
 
+class SeatPreference(BaseModel):
+    row: int = Field(ge=1, le=30)
+    seat: Literal["A", "B", "C", "D", "E", "F"]
+
+
+class Failed(BaseModel):
+    """Unable to extract a seat selection."""
+
+
 @dataclass
 class Deps:
     web_page_text: str
@@ -71,9 +82,21 @@ search_agent = Agent[Deps, FlightDetails | NoFlightFound](
 
 # This agent is responsible for extracting flight details from web page text.
 extraction_agent = Agent(
-    "openai:gpt-4o",
+    model=model,
     result_type=list[FlightDetails],
     system_prompt="Extract all the flight details from the given text.",
+)
+
+# This agent is responsible for extracting the user's seat selection
+seat_preference_agent = Agent[None, SeatPreference | Failed](
+    model=model,
+    result_type=SeatPreference | Failed,  # type: ignore
+    system_prompt=(
+        "Extract the user's seat preference. "
+        "Seats A and F are window seats. "
+        "Row 1 is the front row and has extra leg room. "
+        "Rows 14, and 20 also have extra leg room. "
+    ),
 )
 
 
@@ -110,28 +133,6 @@ async def validate_result(
         raise ModelRetry("\n".join(errors))
     else:
         return result
-
-
-class SeatPreference(BaseModel):
-    row: int = Field(ge=1, le=30)
-    seat: Literal["A", "B", "C", "D", "E", "F"]
-
-
-class Failed(BaseModel):
-    """Unable to extract a seat selection."""
-
-
-# This agent is responsible for extracting the user's seat selection
-seat_preference_agent = Agent[None, SeatPreference | Failed](
-    "openai:gpt-4o",
-    result_type=SeatPreference | Failed,  # type: ignore
-    system_prompt=(
-        "Extract the user's seat preference. "
-        "Seats A and F are window seats. "
-        "Row 1 is the front row and has extra leg room. "
-        "Rows 14, and 20 also have extra leg room. "
-    ),
-)
 
 
 # in reality this would be downloaded from a booking site,
@@ -190,6 +191,28 @@ flights_web_page = """
 usage_limits = UsageLimits(request_limit=15)
 
 
+async def find_seat(usage: Usage) -> SeatPreference:
+    message_history: list[ModelMessage] | None = None
+    while True:
+        answer = Prompt.ask("What seat would you like?")
+
+        result = await seat_preference_agent.run(
+            answer,
+            message_history=message_history,
+            usage=usage,
+            usage_limits=usage_limits,
+        )
+        if isinstance(result.data, SeatPreference):
+            return result.data
+        else:
+            print("Could not understand seat preference. Please try again.")
+            message_history = result.all_messages()
+
+
+async def buy_tickets(flight_details: FlightDetails, seat: SeatPreference):
+    print(f"Purchasing flight {flight_details=!r} {seat=!r}...")
+
+
 async def main():
     deps = Deps(
         web_page_text=flights_web_page,
@@ -227,29 +250,7 @@ async def main():
                 message_history = result.all_messages(
                     result_tool_return_content="Please suggest another flight"
                 )
-
-
-async def find_seat(usage: Usage) -> SeatPreference:
-    message_history: list[ModelMessage] | None = None
-    while True:
-        answer = Prompt.ask("What seat would you like?")
-
-        result = await seat_preference_agent.run(
-            answer,
-            message_history=message_history,
-            usage=usage,
-            usage_limits=usage_limits,
-        )
-        if isinstance(result.data, SeatPreference):
-            return result.data
-        else:
-            print("Could not understand seat preference. Please try again.")
-            message_history = result.all_messages()
-
-
-async def buy_tickets(flight_details: FlightDetails, seat: SeatPreference):
-    print(f"Purchasing flight {flight_details=!r} {seat=!r}...")
-
+    print(result.all_messages())
 
 if __name__ == "__main__":
     import asyncio
