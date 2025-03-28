@@ -147,12 +147,14 @@ async def main2():
 
 agent = Agent(model=model,result_type=str)
 
-# stream = True 的流式返回
+# stream = True 的流式返回，结果消息不会包含在 messages 中
 async def main3():
     async with agent.run_stream('Where does "hello world" come from?') as result:
         # delta=True 是传统的流式，如果为False，那每一次都会输出前面的句子
         async for message in result.stream_text(delta=True):
             print(message,end="")
+        # 这不是保存进去了吗？
+        print(result.all_messages())
 
 if __name__ == "__main__":
     asyncio.run(main3())
