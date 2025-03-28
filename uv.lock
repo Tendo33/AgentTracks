@@ -14,7 +14,7 @@ dependencies = [
     { name = "chainlit" },
     { name = "devtools" },
     { name = "fastapi", extra = ["all"] },
-    { name = "logfire", extra = ["fastapi"] },
+    { name = "logfire", extra = ["fastapi", "sqlite3"] },
     { name = "openai-agents" },
     { name = "pydantic-ai" },
     { name = "pydantic-ai-slim", extra = ["duckduckgo", "logfire", "openai", "tavily"] },
@@ -25,7 +25,7 @@ requires-dist = [
     { name = "chainlit", specifier = ">=2.4.301" },
     { name = "devtools", specifier = ">=0.12.2" },
     { name = "fastapi", extras = ["all"], specifier = ">=0.115.12" },
-    { name = "logfire", extras = ["fastapi"], specifier = ">=3.10.0" },
+    { name = "logfire", extras = ["fastapi", "sqlite3", "sqllite3"], specifier = ">=3.10.0" },
     { name = "openai-agents", specifier = ">=0.0.6" },
     { name = "pydantic-ai", specifier = ">=0.0.43" },
     { name = "pydantic-ai-slim", extras = ["duckduckgo", "logfire", "openai", "tavily"], specifier = ">=0.0.46" },
@@ -1009,6 +1009,9 @@ wheels = [
 fastapi = [
     { name = "opentelemetry-instrumentation-fastapi" },
 ]
+sqlite3 = [
+    { name = "opentelemetry-instrumentation-sqlite3" },
+]
 
 [[package]]
 name = "logfire-api"
@@ -1525,6 +1528,21 @@ wheels = [
 ]
 
 [[package]]
+name = "opentelemetry-instrumentation-dbapi"
+version = "0.52b1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "wrapt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a4/4b/c73327bc53671a773ec530ab7ee3f6ecf8686e2c76246d108e30b35a221e/opentelemetry_instrumentation_dbapi-0.52b1.tar.gz", hash = "sha256:62a6c37b659f6aa5476f12fb76c78f4ad27c49fb71a8a2c11609afcbb84f1e1c", size = 13864 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/76/2f1e9f1e1e8d99d8cc1386313d84a6be6f9caf8babdbbc2836f6ca28139b/opentelemetry_instrumentation_dbapi-0.52b1-py3-none-any.whl", hash = "sha256:47e54d26ad39f3951c7f3b4d4fb685a3c75445cfd57fcff2e92c416575c568ab", size = 12374 },
+]
+
+[[package]]
 name = "opentelemetry-instrumentation-fastapi"
 version = "0.52b1"
 source = { registry = "https://pypi.org/simple" }
@@ -1809,6 +1827,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7f/e0/c64dd0780dd4c4f1eb0f8fc079181d1bfa18e5bb0e3e9ecb3a1de24d0be1/opentelemetry_instrumentation_sqlalchemy-0.52b1.tar.gz", hash = "sha256:6b9255e111eabb7fb0f007333dd1c5012a1df7bcc34dde22c841064826a8a9d9", size = 14584 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bf/d1/dbcfe7ff77e42209de566fa1cda71b78834bc4ffc7908c97ed3b73cc0899/opentelemetry_instrumentation_sqlalchemy-0.52b1-py3-none-any.whl", hash = "sha256:63228df88472109e43c65de2cb1969dcf97768bbee69cda63dfeb396ff0887d6", size = 14135 },
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-sqlite3"
+version = "0.52b1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-instrumentation-dbapi" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7c/bb/2caeaaca7155f1eb867fad2fc9b824550bf81e77c13d3967369fb6f90db1/opentelemetry_instrumentation_sqlite3-0.52b1.tar.gz", hash = "sha256:39692575dca8731ca54399351b4b3b8014190855ff262b4fcb4d9ea7d41a532b", size = 7931 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/ff/557eeb4e910b1f7e45cc4d0a891b2f6282938a4875876c350575465a14fc/opentelemetry_instrumentation_sqlite3-0.52b1-py3-none-any.whl", hash = "sha256:2d70d29e435dd6dd0be7bcf08b66ed3550a159b2489d6d52d9218c05980b7840", size = 9340 },
 ]
 
 [[package]]

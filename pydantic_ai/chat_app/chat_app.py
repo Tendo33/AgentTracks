@@ -9,6 +9,7 @@ from __future__ import annotations as _annotations
 
 import asyncio
 import json
+import os
 import sqlite3
 from collections.abc import AsyncIterator
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -21,8 +22,11 @@ from typing import Annotated, Any, Callable, Literal, TypeVar
 
 import fastapi
 import logfire
+from dotenv import load_dotenv
 from fastapi import Depends, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
+from typing_extensions import LiteralString, ParamSpec, TypedDict
+
 from pydantic_ai import Agent
 from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.messages import (
@@ -33,12 +37,31 @@ from pydantic_ai.messages import (
     TextPart,
     UserPromptPart,
 )
-from typing_extensions import LiteralString, ParamSpec, TypedDict
+from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.providers.openai import OpenAIProvider
 
-# 'if-token-present' means nothing will be sent (and the example will work) if you don't have logfire configured
-logfire.configure(send_to_logfire="if-token-present")
 
-agent = Agent("openai:gpt-4o", instrument=True)
+def setup_environment():
+    """加载环境变量并配置日志"""
+    load_dotenv()
+    logfire_token = os.getenv("LOGFIRE_TOKEN")
+    # 'if-token-present' 表示如果没有配置 logfire，不会发送日志信息
+    logfire.configure(token=logfire_token, send_to_logfire="if-token-present")
+
+    return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
+
+
+def create_openai_model(
+    api_key: str, base_url: str, model_name: str = "deepseek-v3-250324"
+) -> OpenAIModel:
+    """创建 OpenAI 模型实例"""
+    provider = OpenAIProvider(api_key=api_key, base_url=base_url)
+    return OpenAIModel(model_name, provider=provider)
+
+
+api_key, base_url = setup_environment()
+model = create_openai_model(api_key, base_url)
+agent = Agent(model=model, instrument=True)
 THIS_DIR = Path(__file__).parent
 
 
@@ -221,5 +244,9 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "pydantic_ai_examples.chat_app:app", reload=True, reload_dirs=[str(THIS_DIR)]
+        "chat_app:app",
+        reload=True,
+        reload_dirs=[str(THIS_DIR)],
+        port=7541,
+        host="10.0.34.60",
     )
