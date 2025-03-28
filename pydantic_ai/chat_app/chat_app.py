@@ -1,10 +1,3 @@
-"""Simple chat app example build with FastAPI.
-
-Run with:
-
-    uv run -m pydantic_ai_examples.chat_app
-"""
-
 from __future__ import annotations as _annotations
 
 import asyncio
@@ -42,7 +35,11 @@ from pydantic_ai.providers.openai import OpenAIProvider
 
 
 def setup_environment():
-    """加载环境变量并配置日志"""
+    """加载环境变量并配置日志
+    该函数从 `.env` 文件中加载环境变量，并配置日志系统。
+    如果配置了 `LOGFIRE_TOKEN`，则启用日志发送功能。
+    返回 OpenAI 的 API Key 和 API Base URL。
+    """
     load_dotenv()
     logfire_token = os.getenv("LOGFIRE_TOKEN")
     # 'if-token-present' 表示如果没有配置 logfire，不会发送日志信息
@@ -54,7 +51,10 @@ def setup_environment():
 def create_openai_model(
     api_key: str, base_url: str, model_name: str = "deepseek-v3-250324"
 ) -> OpenAIModel:
-    """创建 OpenAI 模型实例"""
+    """创建 OpenAI 模型实例
+    该函数根据提供的 API Key 和 Base URL 创建一个 OpenAI 模型实例。
+    使用 `OpenAIProvider` 作为模型提供者，并返回 `OpenAIModel` 实例。
+    """
     provider = OpenAIProvider(api_key=api_key, base_url=base_url)
     return OpenAIModel(model_name, provider=provider)
 
@@ -67,6 +67,10 @@ THIS_DIR = Path(__file__).parent
 
 @asynccontextmanager
 async def lifespan(_app: fastapi.FastAPI):
+    """FastAPI 应用的生命周期管理
+    该函数用于管理 FastAPI 应用的生命周期。
+    在应用启动时，连接到数据库，并在应用关闭时释放资源。
+    """
     async with Database.connect() as db:
         yield {"db": db}
 
@@ -77,21 +81,32 @@ logfire.instrument_fastapi(app)
 
 @app.get("/")
 async def index() -> FileResponse:
+    """返回聊天应用的 HTML 页面
+    该函数返回聊天应用的前端 HTML 页面，用于渲染用户界面。
+    """
     return FileResponse((THIS_DIR / "chat_app.html"), media_type="text/html")
 
 
 @app.get("/chat_app.ts")
 async def main_ts() -> FileResponse:
-    """Get the raw typescript code, it's compiled in the browser, forgive me."""
+    """返回聊天应用的 TypeScript 代码
+    该函数返回聊天应用的前端 TypeScript 代码，供浏览器动态编译和执行。
+    """
     return FileResponse((THIS_DIR / "chat_app.ts"), media_type="text/plain")
 
 
 async def get_db(request: Request) -> Database:
+    """获取数据库实例
+    该函数从 FastAPI 的请求上下文中获取数据库实例，供其他函数使用。
+    """
     return request.state.db
 
 
 @app.get("/chat/")
 async def get_chat(database: Database = Depends(get_db)) -> Response:
+    """获取聊天记录
+    该函数从数据库中获取所有聊天记录，并将其以 JSON 格式返回给客户端。
+    """
     msgs = await database.get_messages()
     return Response(
         b"\n".join(json.dumps(to_chat_message(m)).encode("utf-8") for m in msgs),
@@ -108,6 +123,10 @@ class ChatMessage(TypedDict):
 
 
 def to_chat_message(m: ModelMessage) -> ChatMessage:
+    """将 ModelMessage 转换为 ChatMessage 格式
+    该函数将 `ModelMessage` 实例转换为前端所需的 `ChatMessage` 格式。
+    根据消息类型（用户输入或模型响应）提取内容并格式化。
+    """
     first_part = m.parts[0]
     if isinstance(m, ModelRequest):
         if isinstance(first_part, UserPromptPart):
@@ -131,9 +150,18 @@ def to_chat_message(m: ModelMessage) -> ChatMessage:
 async def post_chat(
     prompt: Annotated[str, fastapi.Form()], database: Database = Depends(get_db)
 ) -> StreamingResponse:
+    """处理用户输入的聊天消息
+    该函数处理用户输入的聊天消息，并流式返回模型的响应。
+    具体步骤包括：
+    1. 立即返回用户输入的消息。
+    2. 从数据库中获取历史消息作为上下文。
+    3. 调用模型生成响应并流式返回。
+    4. 将新消息保存到数据库中。
+    """
+
     async def stream_messages():
         """Streams new line delimited JSON `Message`s to the client."""
-        # stream the user prompt so that can be displayed straight away
+        # 1. 首先，将用户输入的 prompt 立即流式传输给客户端
         yield (
             json.dumps(
                 {
@@ -144,17 +172,16 @@ async def post_chat(
             ).encode("utf-8")
             + b"\n"
         )
-        # get the chat history so far to pass as context to the agent
+        # 2. 从数据库中获取历史消息，作为上下文传递给 agent
         messages = await database.get_messages()
-        # run the agent with the user prompt and the chat history
+        # 3. 使用用户输入的 prompt 和历史消息运行 agent
         async with agent.run_stream(prompt, message_history=messages) as result:
             async for text in result.stream(debounce_by=0.01):
-                # text here is a `str` and the frontend wants
-                # JSON encoded ModelResponse, so we create one
+                # 4. 将 agent 生成的文本转换为 ModelResponse 格式并流式传输给客户端
                 m = ModelResponse(parts=[TextPart(text)], timestamp=result.timestamp())
                 yield json.dumps(to_chat_message(m)).encode("utf-8") + b"\n"
 
-        # add new messages (e.g. the user prompt and the agent response in this case) to the database
+        # 5. 将新消息（用户输入和 agent 的响应）添加到数据库中
         await database.add_messages(result.new_messages_json())
 
     return StreamingResponse(stream_messages(), media_type="text/plain")
@@ -166,10 +193,9 @@ R = TypeVar("R")
 
 @dataclass
 class Database:
-    """Rudimentary database to store chat messages in SQLite.
-
-    The SQLite standard library package is synchronous, so we
-    use a thread pool executor to run queries asynchronously.
+    """简单的 SQLite 数据库管理类
+    该类用于管理聊天消息的存储和检索。
+    由于 SQLite 标准库是同步的，使用线程池执行器来异步执行数据库操作。
     """
 
     con: sqlite3.Connection
@@ -181,6 +207,10 @@ class Database:
     async def connect(
         cls, file: Path = THIS_DIR / ".chat_app_messages.sqlite"
     ) -> AsyncIterator[Database]:
+        """连接到数据库
+        该函数用于异步连接到 SQLite 数据库，并返回数据库实例。
+        在连接成功后，会创建一个消息表（如果不存在）。
+        """
         with logfire.span("connect to DB"):
             loop = asyncio.get_event_loop()
             executor = ThreadPoolExecutor(max_workers=1)
@@ -193,6 +223,9 @@ class Database:
 
     @staticmethod
     def _connect(file: Path) -> sqlite3.Connection:
+        """同步连接数据库
+        该函数用于同步连接到 SQLite 数据库，并初始化消息表。
+        """
         con = sqlite3.connect(str(file))
         con = logfire.instrument_sqlite3(con)
         cur = con.cursor()
@@ -203,6 +236,9 @@ class Database:
         return con
 
     async def add_messages(self, messages: bytes):
+        """添加消息到数据库
+        该函数将新消息（用户输入和模型响应）插入到数据库中。
+        """
         await self._asyncify(
             self._execute,
             "INSERT INTO messages (message_list) VALUES (?);",
@@ -212,6 +248,9 @@ class Database:
         await self._asyncify(self.con.commit)
 
     async def get_messages(self) -> list[ModelMessage]:
+        """从数据库中获取消息
+        该函数从数据库中检索所有消息，并将其转换为 `ModelMessage` 列表。
+        """
         c = await self._asyncify(
             self._execute, "SELECT message_list FROM messages order by id"
         )
@@ -224,6 +263,10 @@ class Database:
     def _execute(
         self, sql: LiteralString, *args: Any, commit: bool = False
     ) -> sqlite3.Cursor:
+        """执行 SQL 查询
+        该函数用于执行 SQL 查询，并返回结果游标。
+        如果 `commit` 为 True，则提交事务。
+        """
         cur = self.con.cursor()
         cur.execute(sql, args)
         if commit:
@@ -233,6 +276,9 @@ class Database:
     async def _asyncify(
         self, func: Callable[P, R], *args: P.args, **kwargs: P.kwargs
     ) -> R:
+        """将同步函数异步化
+        该函数将同步的数据库操作异步化，以便在异步上下文中执行。
+        """
         return await self._loop.run_in_executor(  # type: ignore
             self._executor,
             partial(func, **kwargs),
