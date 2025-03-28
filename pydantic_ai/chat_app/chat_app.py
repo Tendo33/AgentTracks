@@ -18,6 +18,7 @@ import logfire
 from dotenv import load_dotenv
 from fastapi import Depends, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
+from rich import print
 from typing_extensions import LiteralString, ParamSpec, TypedDict
 
 from pydantic_ai import Agent
@@ -179,6 +180,7 @@ async def post_chat(
             async for text in result.stream(debounce_by=0.01):
                 # 4. 将 agent 生成的文本转换为 ModelResponse 格式并流式传输给客户端
                 m = ModelResponse(parts=[TextPart(text)], timestamp=result.timestamp())
+                print(m)
                 yield json.dumps(to_chat_message(m)).encode("utf-8") + b"\n"
 
         # 5. 将新消息（用户输入和 agent 的响应）添加到数据库中
