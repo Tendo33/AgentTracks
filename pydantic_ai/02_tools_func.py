@@ -51,15 +51,29 @@ def get_player_name(ctx: RunContext[str]) -> str:
 agent_a = Agent(
     model=model,
     deps_type=str,
-    tools=[roll_die, get_player_name],
+    tools=[roll_die, get_player_name], # 自动判断要不要使用上下文
+    system_prompt=(
+        "You're a dice game, you should roll the die and see if the number "
+        "you get back matches the user's guess. If so, tell them they're a winner. "
+        "Use the player's name in the response."
+    ),
+    instrument=True,
 )
 agent_b = Agent(
     model=model,
     deps_type=str,
     tools=[
         Tool(roll_die, takes_ctx=False),
-        Tool(get_player_name, takes_ctx=True),
+        Tool(get_player_name, takes_ctx=True),  # 显示制定要使用上下文
     ],
+    system_prompt=(
+        "You're a dice game, you should roll the die and see if the number "
+        "you get back matches the user's guess. If so, tell them they're a winner. "
+        "Use the player's name in the response."
+    ),
+    instrument=True,
 )
-dice_result = agent_b.run_sync("My guess is 4", deps="Anne")
+dice_result = agent_a.run_sync("My guess is 4", deps="Anne")
 print(dice_result.data)
+print("=====================================================================")
+print(dice_result.all_messages())
