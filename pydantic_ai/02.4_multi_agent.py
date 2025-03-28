@@ -35,7 +35,7 @@ model = create_openai_model(api_key, base_url)
 joke_selection_agent = Agent(
     model=model,
     system_prompt=(
-        "Use the `joke_factory` to generate some jokes, then choose the best. "
+        "Use the `joke_factory` to generate some(>=10) jokes, then choose the best. "
         "You must return just a single joke."
     ),
 )
