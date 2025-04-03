@@ -6,14 +6,20 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "agno>=1.2.7",
+    "beautifulsoup4>=4.13.3",
     "chainlit>=2.4.301",
     "devtools>=0.12.2",
     "exa-py>=1.10.0",
     "fastapi[all]>=0.115.12",
     "logfire[fastapi,sqlite3,sqllite3]>=3.10.0",
+    "nest-asyncio>=1.6.0",
     "openai>=1.68.2",
     "openai-agents>=0.0.6",
+    "pgvector>=0.4.0",
+    "psycopg>=3.2.6",
     "pydantic-ai>=0.0.43",
     "pydantic-ai-slim[duckduckgo,logfire,openai,tavily]>=0.0.46",
+    "pypdf>=5.4.0",
+    "sqlalchemy>=2.0.40",
     "streamlit>=1.44.1",
 ]

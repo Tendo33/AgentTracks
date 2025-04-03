@@ -6,13 +6,6 @@ import nest_asyncio
 import requests
 import streamlit as st
 from agentic_rag import get_agentic_rag_agent
-from agno.agent import Agent
-from agno.document import Document
-from agno.document.reader.csv_reader import CSVReader
-from agno.document.reader.pdf_reader import PDFReader
-from agno.document.reader.text_reader import TextReader
-from agno.document.reader.website_reader import WebsiteReader
-from agno.utils.log import logger
 from utils import (
     CUSTOM_CSS,
     about_widget,
@@ -22,6 +15,14 @@ from utils import (
     rename_session_widget,
     session_selector_widget,
 )
+
+from agno.agent import Agent
+from agno.document import Document
+from agno.document.reader.csv_reader import CSVReader
+from agno.document.reader.pdf_reader import PDFReader
+from agno.document.reader.text_reader import TextReader
+from agno.document.reader.website_reader import WebsiteReader
+from agno.utils.log import logger
 
 nest_asyncio.apply()
 st.set_page_config(
@@ -85,11 +86,7 @@ def main():
     # Model selector
     ####################################################################
     model_options = {
-        "o3-mini": "openai:o3-mini",
-        "gpt-4o": "openai:gpt-4o",
-        "gemini-2.0-flash-exp": "google:gemini-2.0-flash-exp",
-        "claude-3-5-sonnet": "anthropic:claude-3-5-sonnet-20241022",
-        "llama-3.3-70b": "groq:llama-3.3-70b-versatile",
+        "deepseek-v3":"openai_like:deepseek-v3-250324"
     }
     selected_model = st.sidebar.selectbox(
         "Select a model",
@@ -102,18 +99,17 @@ def main():
     ####################################################################
     # Initialize Agent
     ####################################################################
-    agentic_rag_agent: Agent
     if (
         "agentic_rag_agent" not in st.session_state
         or st.session_state["agentic_rag_agent"] is None
         or st.session_state.get("current_model") != model_id
     ):
         logger.info("---*--- Creating new Agentic RAG  ---*---")
-        agentic_rag_agent = get_agentic_rag_agent(model_id=model_id)
+        agentic_rag_agent: Agent = get_agentic_rag_agent(model_id=model_id)
         st.session_state["agentic_rag_agent"] = agentic_rag_agent
         st.session_state["current_model"] = model_id
     else:
-        agentic_rag_agent = st.session_state["agentic_rag_agent"]
+        agentic_rag_agent: Agent = st.session_state["agentic_rag_agent"]
 
     ####################################################################
     # Load Agent Session from the database
@@ -313,5 +309,5 @@ def main():
     ####################################################################
     about_widget()
 
-
-main()
+if __name__ == "__main__":
+    main()

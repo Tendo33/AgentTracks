@@ -28,26 +28,35 @@ The agent uses:
 
 View the README for instructions on how to run the application.
 """
-
+import os
 from typing import Optional
+
+from dotenv import load_dotenv
+from rich import print
 
 from agno.agent import Agent, AgentMemory
 from agno.embedder.openai import OpenAIEmbedder
 from agno.knowledge import AgentKnowledge
 from agno.memory.db.postgres import PgMemoryDb
-from agno.models.anthropic import Claude
-from agno.models.google import Gemini
-from agno.models.groq import Groq
 from agno.models.openai import OpenAIChat
+from agno.models.openai.like import OpenAILike
 from agno.storage.agent.postgres import PostgresAgentStorage
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.vectordb.pgvector import PgVector
 
-db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
+#通过 psycopg 驱动，使用用户名 ai 和密码 ai，连接到本地 5532 端口上的 PostgreSQL 数据库，并选择名为 ai 的数据库。
+db_url = "postgresql+psycopg://postgres:aXoMMebXwmXPgrlCDAI6ulqF6@postgres-dev1.e-tudou.com:5432/ai"
 
+def setup_environment():
+    """加载环境变量并配置日志"""
+    load_dotenv()
+    print("加载成功")
+    return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
+
+api_key, base_url = setup_environment()
 
 def get_agentic_rag_agent(
-    model_id: str = "openai:gpt-4o",
+    model_id: str = "openai_like:deepseek-v3-250324",
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
     debug_mode: bool = True,
@@ -59,12 +68,12 @@ def get_agentic_rag_agent(
     # Select appropriate model class based on provider
     if provider == "openai":
         model = OpenAIChat(id=model_name)
-    elif provider == "google":
-        model = Gemini(id=model_name)
-    elif provider == "anthropic":
-        model = Claude(id=model_name)
-    elif provider == "groq":
-        model = Groq(id=model_name)
+    elif provider == "openai_like":
+        model=OpenAILike(
+        id="deepseek-v3-250324",
+        api_key=api_key,
+        base_url=base_url,
+    )
     else:
         raise ValueError(f"Unsupported model provider: {provider}")
     # Define persistent memory for chat history
