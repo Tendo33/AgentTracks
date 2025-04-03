@@ -15,4 +15,5 @@ dependencies = [
     "openai-agents>=0.0.6",
     "pydantic-ai>=0.0.43",
     "pydantic-ai-slim[duckduckgo,logfire,openai,tavily]>=0.0.46",
+    "streamlit>=1.44.1",
 ]
