@@ -12,6 +12,7 @@ dependencies = [
   "duckduckgo-search",
   "exa_py",
   "fastapi[standard]",
+  "httpx[socks]>=0.28.1",
   "nest_asyncio",
   "openai",
   "pgvector",
