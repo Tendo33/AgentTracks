@@ -85,9 +85,7 @@ def main():
     ####################################################################
     # Model selector
     ####################################################################
-    model_options = {
-        "deepseek-v3":"openai_like:deepseek-v3-250324"
-    }
+    model_options = {"deepseek-v3": "openai_like:deepseek-v3-250324"}
     selected_model = st.sidebar.selectbox(
         "Select a model",
         options=list(model_options.keys()),
@@ -308,6 +306,7 @@ def main():
     # About section
     ####################################################################
     about_widget()
+
 
 if __name__ == "__main__":
     main()

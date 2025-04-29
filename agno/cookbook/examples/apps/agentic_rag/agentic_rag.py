@@ -28,6 +28,7 @@ The agent uses:
 
 View the README for instructions on how to run the application.
 """
+
 import os
 from typing import Optional
 
@@ -44,8 +45,9 @@ from agno.storage.agent.postgres import PostgresAgentStorage
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.vectordb.pgvector import PgVector
 
-#通过 psycopg 驱动，使用用户名 ai 和密码 ai，连接到本地 5532 端口上的 PostgreSQL 数据库，并选择名为 ai 的数据库。
+# 通过 psycopg 驱动，使用用户名 ai 和密码 ai，连接到本地 5532 端口上的 PostgreSQL 数据库，并选择名为 ai 的数据库。
 db_url = "postgresql+psycopg://postgres:aXoMMebXwmXPgrlCDAI6ulqF6@postgres-dev1.e-tudou.com:5432/ai"
+
 
 def setup_environment():
     """加载环境变量并配置日志"""
@@ -53,7 +55,9 @@ def setup_environment():
     print("加载成功")
     return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
 
+
 api_key, base_url = setup_environment()
+
 
 def get_agentic_rag_agent(
     model_id: str = "openai_like:deepseek-v3-250324",
@@ -69,11 +73,11 @@ def get_agentic_rag_agent(
     if provider == "openai":
         model = OpenAIChat(id=model_name)
     elif provider == "openai_like":
-        model=OpenAILike(
-        id="deepseek-v3-250324",
-        api_key=api_key,
-        base_url=base_url,
-    )
+        model = OpenAILike(
+            id="deepseek-v3-250324",
+            api_key=api_key,
+            base_url=base_url,
+        )
     else:
         raise ValueError(f"Unsupported model provider: {provider}")
     # Define persistent memory for chat history

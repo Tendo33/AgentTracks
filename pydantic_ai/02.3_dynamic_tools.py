@@ -41,6 +41,7 @@ model = create_openai_model(api_key, base_url)
 def greet(name: str) -> str:
     return f"hello {name}"
 
+
 # prepare 函数必须有这两个值
 async def prepare_greet(
     ctx: RunContext[Literal["human", "machine"]], tool_def: ToolDefinition

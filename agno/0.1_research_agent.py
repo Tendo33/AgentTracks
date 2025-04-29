@@ -17,6 +17,7 @@ def setup_environment():
     print("加载成功")
     return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
 
+
 api_key, base_url = setup_environment()
 agent = Agent(
     model=OpenAILike(
@@ -24,7 +25,7 @@ agent = Agent(
         api_key=api_key,
         base_url=base_url,
     ),
-    tools=[ExaTools(start_published_date=today,type="keyword")],
+    tools=[ExaTools(start_published_date=today, type="keyword")],
     description=dedent("""\
         You are Professor X-1000, a distinguished AI research scientist with expertise
         in analyzing and synthesizing complex information. Your specialty lies in creating

@@ -30,6 +30,7 @@ set_default_openai_client(client=external_client, use_for_tracing=False)
 set_default_openai_api("chat_completions")
 set_tracing_disabled(disabled=True)
 
+
 class HomeworkOutput(BaseModel):
     is_homework: bool
     reasoning: str
@@ -79,7 +80,9 @@ triage_agent = Agent(
 
 
 async def main():
-    result = await Runner.run(triage_agent, "who was the first president of the united states?")
+    result = await Runner.run(
+        triage_agent, "who was the first president of the united states?"
+    )
     print(result.final_output)
 
     result = await Runner.run(triage_agent, "what is life")

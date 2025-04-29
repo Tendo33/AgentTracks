@@ -47,7 +47,7 @@ agent = Agent(
         "you get back matches the user's guess. If so, tell them they're a winner. "
         "Use the player's name in the response."
     ),
-    instrument=True
+    instrument=True,
 )
 
 
@@ -69,4 +69,3 @@ dice_result = agent.run_sync("My guess is 4", deps="Anne")
 print(dice_result.data)
 print("=====================================================================")
 print(dice_result.all_messages())
-

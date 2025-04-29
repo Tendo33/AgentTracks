@@ -47,7 +47,7 @@ print(result_sync.usage())
 
 
 async def main():
-    #异步方式运行 Agent
+    # 异步方式运行 Agent
     result = await agent.run("What is the capital of France?")
     print(result.data)
 
@@ -67,6 +67,7 @@ async def agent_iter_async_for():
     print(nodes)
     print("========================================================")
     print(agent_run.result.data)  # 输出: Paris
+
 
 async def agent_iter_next():
     """使用 next 方法手动驱动 Agent 的迭代"""

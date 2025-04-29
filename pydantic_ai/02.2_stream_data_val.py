@@ -33,8 +33,6 @@ api_key, base_url = setup_environment()
 model = create_openai_model(api_key, base_url)
 
 
-
-
 class UserProfile(TypedDict, total=False):
     name: str
     dob: date
@@ -56,5 +54,6 @@ async def main():
             except ValidationError:
                 continue
             print(profile)
+
 
 asyncio.run(main())

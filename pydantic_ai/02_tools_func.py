@@ -51,7 +51,7 @@ def get_player_name(ctx: RunContext[str]) -> str:
 agent_a = Agent(
     model=model,
     deps_type=str,
-    tools=[roll_die, get_player_name], # 自动判断要不要使用上下文
+    tools=[roll_die, get_player_name],  # 自动判断要不要使用上下文
     system_prompt=(
         "You're a dice game, you should roll the die and see if the number "
         "you get back matches the user's guess. If so, tell them they're a winner. "

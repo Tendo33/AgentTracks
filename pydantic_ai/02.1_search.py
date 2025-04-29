@@ -30,7 +30,7 @@ def create_openai_model(
     return OpenAIModel(model_name, provider=provider)
 
 
-api_key, base_url,tavily_api_key = setup_environment()
+api_key, base_url, tavily_api_key = setup_environment()
 model = create_openai_model(api_key, base_url)
 
 agent_tavily = Agent(

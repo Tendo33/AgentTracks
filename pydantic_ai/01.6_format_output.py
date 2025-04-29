@@ -45,7 +45,7 @@ agent: Agent[None, Union[Box, str]] = Agent(
         "Extract me the dimensions of a box, "
         "if you can't extract all data, ask the user to try again.不要自己编造"
     ),
-    instrument=True
+    instrument=True,
 )
 
 result = agent.run_sync("The box is 10x20x30")
