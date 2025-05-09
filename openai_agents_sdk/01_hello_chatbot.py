@@ -28,17 +28,25 @@ set_default_openai_api("chat_completions")
 set_tracing_disabled(disabled=True)
 
 
-
-model = OpenAIChatCompletionsModel(model="Qwen2.5-72B-Instruct-AWQ", openai_client=external_client)
+model = OpenAIChatCompletionsModel(
+    model="Qwen2.5-72B-Instruct-AWQ", openai_client=external_client
+)
 
 
 config = RunConfig(model=model, model_provider=external_client, tracing_disabled=True)
 
 
 async def main():
-    agent = Agent(name="Assistant", instructions="You are helpful Assistent.", model=model,model_settings=ModelSettings(temperature=0.8),)
+    agent = Agent(
+        name="Assistant",
+        instructions="You are helpful Assistent.",
+        model=model,
+        model_settings=ModelSettings(temperature=0.8),
+    )
 
-    result = await Runner.run(agent, "Tell me about recursion in programming.", run_config=config)
+    result = await Runner.run(
+        agent, "Tell me about recursion in programming.", run_config=config
+    )
     print(result.final_output)
 
 

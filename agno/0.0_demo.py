@@ -12,6 +12,7 @@ def setup_environment():
     print("加载成功")
     return os.getenv("OPENAI_API_KEY"), os.getenv("OPENAI_API_BASE")
 
+
 api_key, base_url = setup_environment()
 
 agent = Agent(
