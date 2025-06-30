@@ -1,7 +1,8 @@
 from typing import Annotated
+
+from langchain.schema import BaseMessage
 from langgraph.graph.message import add_messages
 from typing_extensions import TypedDict
-from langchain.schema import BaseMessage
 
 
 class State(TypedDict):

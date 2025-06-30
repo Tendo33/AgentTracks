@@ -4,9 +4,9 @@ try:
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
-from bs4 import BeautifulSoup
-import re
 import asyncio
+
+from bs4 import BeautifulSoup
 
 
 async def capture_page_and_img_src(url: str, image_path: str) -> tuple[str, list[str]]:

@@ -1,14 +1,11 @@
-from fastapi import WebSocket, WebSocketDisconnect
 import asyncio
-
-import os
 import logging
-import time
-import json
 
 from agents.llamapress_legacy.state import LlamaPressMessage
-from websocket.web_socket_connection_manager import WebSocketConnectionManager
+from fastapi import WebSocket, WebSocketDisconnect
+
 from websocket.request_handler import RequestHandler
+from websocket.web_socket_connection_manager import WebSocketConnectionManager
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +34,7 @@ class WebSocketHandler:
                     logger.info(
                         f"Message received after {receive_time - start_time:.2f}s"
                     )
-                    logger.info(f"Received message from LlamaPress!")
+                    logger.info("Received message from LlamaPress!")
 
                     if isinstance(json_data, dict) and json_data.get("type") == "ping":
                         logger.info("PING RECV, SENDING PONG")

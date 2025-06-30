@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 
-from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 
 
 class BaseAgent(ABC):

@@ -1,23 +1,15 @@
-from langchain_openai import ChatOpenAI
-from langchain_core.tools import tool
-from dotenv import load_dotenv
-
-load_dotenv()
-
-from langgraph.graph import MessagesState
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-
-from langgraph.graph import START, StateGraph
-from langgraph.prebuilt import tools_condition
-from langgraph.prebuilt import ToolNode
-
 import asyncio
 
-from agents.utils.playwright_screenshot import capture_page_and_img_src
-
-from openai import OpenAI
 from agents.utils.images import encode_image
+from agents.utils.playwright_screenshot import capture_page_and_img_src
+from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+from langgraph.graph import START, MessagesState, StateGraph
+from langgraph.prebuilt import ToolNode, tools_condition
 
+load_dotenv()
 
 @tool
 def write_html(html_code: str) -> str:
@@ -75,7 +67,7 @@ def get_screenshot_and_html_content_using_playwright(url: str) -> tuple[str, lis
     # Getting the Base64 string
     base64_image = encode_image("assets/screenshot-of-page-to-clone.png")
 
-    print(f"Making our call to o3 vision right now")
+    print("Making our call to o3 vision right now")
 
     response = llm.invoke(
         [

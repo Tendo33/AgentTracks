@@ -1,25 +1,19 @@
-from asyncio import Lock, CancelledError
-
-from fastapi import FastAPI, WebSocket
-
-from websocket.web_socket_request_context import WebSocketRequestContext
-from typing import Dict, Optional
-
-from langchain.schema import HumanMessage
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from langchain_core.load import dumpd
-from psycopg_pool import AsyncConnectionPool
-
-from dotenv import load_dotenv
-import json
 import importlib
-import os
+import json
 import logging
+import os
+from asyncio import CancelledError, Lock
+from typing import Dict
 
 # This is an example of a custom state object for a custom agent.
-from agents.llamapress_legacy.state import LlamaPressMessage
 from agents.llamabot_v1.nodes import LlamaBotState
+from dotenv import load_dotenv
+from fastapi import FastAPI, WebSocket
+from langchain.schema import HumanMessage
+from langchain_core.load import dumpd
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from psycopg_pool import AsyncConnectionPool
 
 # from llm.websocket.websocket_helper import send_json_through_websocket
 # from llm.workflows.nodes import build_workflow, build_workflow_saas
@@ -143,7 +137,7 @@ class RequestHandler:
 
             except CancelledError as e:
                 logger.info("handle_request was cancelled")
-                await websocket.send_json({"type": "error", "content": f"Cancelled!"})
+                await websocket.send_json({"type": "error", "content": "Cancelled!"})
                 raise e
             except Exception as e:
                 logger.error(f"Error handling request: {str(e)}", exc_info=True)

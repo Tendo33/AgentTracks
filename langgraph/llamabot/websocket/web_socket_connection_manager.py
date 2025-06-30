@@ -1,7 +1,8 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-import asyncio
 import logging
 from typing import Union
+
+from fastapi import FastAPI, WebSocket
+
 # from logging_config import setup_google_cloud_logging
 
 logging.basicConfig(level=logging.INFO)

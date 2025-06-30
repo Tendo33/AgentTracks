@@ -1,22 +1,15 @@
-from typing import Annotated
 
-from langchain_openai import ChatOpenAI
-from typing_extensions import TypedDict
-
-from langgraph.graph import StateGraph, START
-from langgraph.graph.message import add_messages
-
+from agents.write_html_agent.design_and_plan import design_and_plan_node
+from agents.write_html_agent.respond_naturally import respond_naturally_node
 from agents.write_html_agent.route_initial_user_message import (
     route_initial_user_message_node,
 )
-from agents.write_html_agent.respond_naturally import respond_naturally_node
-from agents.write_html_agent.design_and_plan import design_and_plan_node
-from agents.write_html_agent.write_html_code import write_html_code_node
-from langchain.schema import HumanMessage
-
 from agents.write_html_agent.state import State
-
+from agents.write_html_agent.write_html_code import write_html_code_node
 from dotenv import load_dotenv
+from langchain.schema import HumanMessage
+from langchain_openai import ChatOpenAI
+from langgraph.graph import START, StateGraph
 
 load_dotenv()
 
