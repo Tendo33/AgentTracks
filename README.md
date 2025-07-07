@@ -10,7 +10,7 @@ pip install uv
 
 ```bash
 git clone https://github.com/Tendo33/AgentTracks.git
-cd AgentLog
+cd AgentTracks
 uv sync
 ```
 
