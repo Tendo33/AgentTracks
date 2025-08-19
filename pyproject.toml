@@ -1,7 +1,7 @@
 [project]
 name = "agenttracks"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI Agent框架学习项目 - 通过实际示例学习和比较主流AI Agent框架"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
