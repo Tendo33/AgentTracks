@@ -11,6 +11,7 @@ from langgraph.prebuilt import InjectedState, ToolNode, tools_condition
 
 load_dotenv()
 
+
 class LlamaBotState(MessagesState):
     api_token: str
     agent_instructions: str

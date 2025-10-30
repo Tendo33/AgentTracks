@@ -1,0 +1,57 @@
+# -*- coding: utf-8 -*-
+"""The main entry point of the ReAct agent example."""
+
+import asyncio
+import os
+
+import dotenv
+from agentscope.agent import ReActAgent, UserAgent
+from agentscope.formatter import DashScopeChatFormatter
+from agentscope.memory import InMemoryMemory
+from agentscope.model import DashScopeChatModel
+from agentscope.tool import (
+    Toolkit,
+    execute_python_code,
+    execute_shell_command,
+    view_text_file,
+)
+
+dotenv.load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+CHAT_MODEL = os.getenv("CHAT_MODEL")
+
+
+async def main() -> None:
+    """The main entry point for the ReAct agent example."""
+    toolkit = Toolkit()
+    toolkit.register_tool_function(execute_shell_command)
+    toolkit.register_tool_function(execute_python_code)
+    toolkit.register_tool_function(view_text_file)
+
+    agent = ReActAgent(
+        name="Friday",
+        sys_prompt="You are a helpful assistant named Friday.",
+        model=DashScopeChatModel(
+            api_key=OPENAI_API_KEY,
+            base_url=OPENAI_API_BASE,
+            model_name=CHAT_MODEL,
+            enable_thinking=False,
+            stream=True,
+        ),
+        formatter=DashScopeChatFormatter(),
+        toolkit=toolkit,
+        memory=InMemoryMemory(),
+    )
+    user = UserAgent("User")
+
+    msg = None
+    while True:
+        msg = await user(msg)
+        if msg.get_text_content() == "exit":
+            break
+        msg = await agent(msg)
+
+
+asyncio.run(main())

@@ -1,4 +1,3 @@
-
 def get_numbered_code_from_file(file_path: str) -> str:
     numbered = [
         f"{i:05d}: {ln.rstrip()}"  # 5–6 digits = ≤ 999 999 lines

@@ -11,6 +11,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 load_dotenv()
 
+
 @tool
 def write_html(html_code: str) -> str:
     """

@@ -16,6 +16,7 @@ def setup_environment():
 
 api_key, base_url = setup_environment()
 
+
 # Define tools to manage our shopping list
 def add_item(agent: Agent, item: str) -> str:
     """Add an item to the shopping list and return confirmation.
@@ -219,7 +220,9 @@ shopping_team.print_response(
 )
 print(f"Session state: {shopping_team.team_session_state}")
 
-shopping_team.print_response("whats on my list?", stream=True, stream_intermediate_steps=True)
+shopping_team.print_response(
+    "whats on my list?", stream=True, stream_intermediate_steps=True
+)
 print(f"Session state: {shopping_team.team_session_state}")
 
 # Try the meal planning feature
