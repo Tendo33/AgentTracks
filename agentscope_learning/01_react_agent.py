@@ -6,9 +6,9 @@ import os
 
 import dotenv
 from agentscope.agent import ReActAgent, UserAgent
-from agentscope.formatter import DashScopeChatFormatter
+from agentscope.formatter import OpenAIChatFormatter
 from agentscope.memory import InMemoryMemory
-from agentscope.model import DashScopeChatModel
+from agentscope.model import OpenAIChatModel
 from agentscope.tool import (
     Toolkit,
     execute_python_code,
@@ -33,14 +33,14 @@ async def main() -> None:
     agent = ReActAgent(
         name="Friday",
         sys_prompt="You are a helpful assistant named Friday.",
-        model=DashScopeChatModel(
+        model=OpenAIChatModel(
             api_key=OPENAI_API_KEY,
             base_url=OPENAI_BASE_URL,
             model_name=CHAT_MODEL,
             enable_thinking=False,
             stream=True,
         ),
-        formatter=DashScopeChatFormatter(),
+        formatter=OpenAIChatFormatter(),
         toolkit=toolkit,
         memory=InMemoryMemory(),
     )
