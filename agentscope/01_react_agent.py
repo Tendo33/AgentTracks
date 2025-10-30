@@ -19,7 +19,7 @@ from agentscope.tool import (
 dotenv.load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 CHAT_MODEL = os.getenv("CHAT_MODEL")
 
 
@@ -35,7 +35,7 @@ async def main() -> None:
         sys_prompt="You are a helpful assistant named Friday.",
         model=DashScopeChatModel(
             api_key=OPENAI_API_KEY,
-            base_url=OPENAI_API_BASE,
+            base_url=OPENAI_BASE_URL,
             model_name=CHAT_MODEL,
             enable_thinking=False,
             stream=True,
@@ -53,5 +53,6 @@ async def main() -> None:
             break
         msg = await agent(msg)
 
-
-asyncio.run(main())
+if __name__ == "__main__":
+    
+    asyncio.run(main())
