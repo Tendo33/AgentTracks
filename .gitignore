@@ -169,3 +169,4 @@ config/
 saves/
 output/
 wandb/
+agentscope

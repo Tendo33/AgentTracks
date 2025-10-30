@@ -15,12 +15,15 @@ from agentscope.tool import (
     execute_shell_command,
     view_text_file,
 )
+from utils.logfire_utils import configure_logfire
 
 dotenv.load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
 CHAT_MODEL = os.getenv("CHAT_MODEL")
+
+configure_logfire()
 
 
 async def main() -> None:
@@ -35,10 +38,10 @@ async def main() -> None:
         sys_prompt="You are a helpful assistant named Friday.",
         model=OpenAIChatModel(
             api_key=OPENAI_API_KEY,
-            base_url=OPENAI_BASE_URL,
             model_name=CHAT_MODEL,
-            enable_thinking=False,
             stream=True,
+            client_args={"base_url": f"{OPENAI_BASE_URL}"},
+            generate_kwargs={"temperature": 0.7, "max_tokens": 12000},
         ),
         formatter=OpenAIChatFormatter(),
         toolkit=toolkit,
@@ -53,6 +56,6 @@ async def main() -> None:
             break
         msg = await agent(msg)
 
+
 if __name__ == "__main__":
-    
     asyncio.run(main())
