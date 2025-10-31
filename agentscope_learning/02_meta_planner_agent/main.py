@@ -34,6 +34,7 @@ import json
 import os
 from datetime import datetime
 
+import dotenv
 from _meta_planner import MetaPlanner  # pylint: disable=C0411
 from agentscope.agent import UserAgent
 from agentscope.formatter import OpenAIChatFormatter
@@ -47,8 +48,17 @@ from agentscope.tool import (
     execute_shell_command,
     view_text_file,
 )
+from utils.logfire_utils import configure_logfire
 
 from agentscope import logger
+
+dotenv.load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
+CHAT_MODEL = os.getenv("CHAT_MODEL")
+
+configure_logfire()
 
 
 def chunking_too_long_tool_response(
@@ -167,8 +177,11 @@ async def main() -> None:
         agent = MetaPlanner(
             name="Task-Meta-Planner",
             model=OpenAIChatModel(
-                model_name="gpt-4o-mini",
+                api_key=OPENAI_API_KEY,
+                model_name=CHAT_MODEL,
                 stream=True,
+                client_args={"base_url": f"{OPENAI_BASE_URL}"},
+                generate_kwargs={"temperature": 0.7, "max_tokens": 32000},
             ),
             formatter=OpenAIChatFormatter(),
             toolkit=planner_toolkit,

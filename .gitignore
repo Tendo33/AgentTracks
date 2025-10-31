@@ -170,3 +170,4 @@ saves/
 output/
 wandb/
 agentscope
+agent_outputs/
