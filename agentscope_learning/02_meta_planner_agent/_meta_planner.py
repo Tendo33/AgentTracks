@@ -4,19 +4,12 @@ Meta Planner agent class that can handle complicated tasks with
 planning-execution pattern.
 """
 
+import json
 import os
 import uuid
-from typing import Optional, Any, Literal
-import json
 from datetime import datetime
 from pathlib import Path
-
-from agentscope.message import Msg, ToolUseBlock, TextBlock, ToolResultBlock
-from agentscope.tool import Toolkit, ToolResponse
-from agentscope.model import ChatModelBase
-from agentscope.formatter import FormatterBase
-from agentscope.memory import MemoryBase
-from agentscope.agent import ReActAgent
+from typing import Any, Literal, Optional
 
 from _planning_tools import (  # pylint: disable=C0411
     PlannerNoteBook,
@@ -25,169 +18,14 @@ from _planning_tools import (  # pylint: disable=C0411
     share_tools,
 )
 
+from agentscope.agent import ReActAgent
+from agentscope.formatter import FormatterBase
+from agentscope.memory import MemoryBase
+from agentscope.message import Msg, TextBlock, ToolResultBlock, ToolUseBlock
+from agentscope.model import ChatModelBase
+from agentscope.tool import Toolkit, ToolResponse
+
 PlannerStage = Literal["post_reasoning", "post_action", "pre_reasoning"]
-
-
-def _infer_planner_stage_with_msg(
-    cur_msg: Msg,
-) -> tuple[PlannerStage, list[str]]:
-    """
-    Infer the planner stage and extract tool names from a message.
-
-    Analyzes a message to determine the current stage of the planner workflow
-    and extracts any tool names if tool calls are present in the message.
-
-    Args:
-        cur_msg (Msg): The message to analyze for stage inference.
-
-    Returns:
-        tuple[PlannerStage, list[str]]: A tuple containing:
-            - PlannerStage: One of "pre_reasoning", "post_reasoning", or
-                "post_action"
-            - list[str]: List of tool names found in tool_use or
-                tool_result blocks
-
-    Note:
-        - "pre_reasoning": System role messages with string content
-        - "post_reasoning": Messages with tool_use blocks or plain text content
-        - "post_action": Messages with tool_result blocks
-        - Tool names are extracted from both tool_use and tool_result blocks
-    """
-    blocks = cur_msg.content
-    if isinstance(blocks, str) and cur_msg.role in ["system", "user"]:
-        return "pre_reasoning", []
-
-    cur_tool_names = [
-        str(b.get("name", "no_name_tool"))
-        for b in blocks
-        if b["type"] in ["tool_use", "tool_result"]
-    ]
-    if cur_msg.has_content_blocks("tool_result"):
-        return "post_action", cur_tool_names
-    elif cur_msg.has_content_blocks("tool_use"):
-        return "post_reasoning", cur_tool_names
-    else:
-        return "post_reasoning", cur_tool_names
-
-
-def update_user_input_pre_reply_hook(
-    self: "MetaPlanner",
-    kwargs: dict[str, Any],
-) -> None:
-    """Hook for loading user input to planner notebook"""
-    msg = kwargs.get("msg", None)
-    if isinstance(msg, Msg):
-        msg = [msg]
-    if isinstance(msg, list):
-        for m in msg:
-            self.planner_notebook.user_input.append(m.content)
-
-
-def planner_save_post_reasoning_state(
-    self: "MetaPlanner",
-    reasoning_input: dict[str, Any],  # pylint: disable=W0613
-    reasoning_output: Msg,
-) -> None:
-    """Hook func for save state after reasoning step"""
-    if self.state_saving_dir:
-        os.makedirs(self.state_saving_dir, exist_ok=True)
-        cur_stage, _ = _infer_planner_stage_with_msg(reasoning_output)
-        time_str = datetime.now().strftime("%Y%m%d%H%M%S")
-        file_path = os.path.join(
-            self.state_saving_dir,
-            f"state-{cur_stage}-{time_str}.json",
-        )
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(self.state_dict(), f, ensure_ascii=False, indent=4)
-
-
-async def planner_load_state_pre_reasoning_hook(
-    self: "MetaPlanner",  # pylint: disable=W0613
-    *args: Any,
-    **kwargs: Any,
-) -> None:
-    """Hook func for loading saved state after reasoning step"""
-    mem_msgs = await self.memory.get_memory()
-    if len(mem_msgs) > 0:
-        stage, _ = _infer_planner_stage_with_msg(mem_msgs[-1])
-        if stage == "post_reasoning":
-            self.state_loading_reasoning_msg = mem_msgs[-1]
-            # delete the last reasoning message to avoid error when
-            # calling model in reasoning step
-            await self.memory.delete(len(mem_msgs) - 1)
-
-
-async def planner_load_state_post_reasoning_hook(
-    self: "MetaPlanner",  # pylint: disable=W0613
-    *args: Any,
-    **kwargs: Any,
-) -> Msg:
-    """Hook func for loading saved state after reasoning step"""
-    if self.state_loading_reasoning_msg is not None:
-        num_msgs = await self.memory.size()
-        # replace the newly generated reasoning message with the loaded one
-        await self.memory.delete(num_msgs - 1)
-        old_reasoning_msg = self.state_loading_reasoning_msg
-        await self.memory.add(old_reasoning_msg)
-        self.state_loading_reasoning_msg = None
-        return old_reasoning_msg
-
-
-async def planner_compose_reasoning_msg_pre_reasoning_hook(
-    self: "MetaPlanner",  # pylint: disable=W0613
-    *args: Any,
-    **kwargs: Any,
-) -> None:
-    """Hook func for composing msg for reasoning step"""
-    reasoning_info = (
-        "## All User Input\n{all_user_input}\n\n"
-        "## Session Context\n"
-        "```json\n{notebook_string}\n```\n\n"
-    ).format_map(
-        {
-            "notebook_string": self.planner_notebook.model_dump_json(
-                exclude={"user_input", "full_tool_list"},
-                indent=2,
-            ),
-            "all_user_input": self.planner_notebook.user_input,
-        },
-    )
-    reasoning_msg = Msg(
-        "user",
-        content=reasoning_info,
-        role="user",
-    )
-    await self.memory.add(reasoning_msg)
-
-
-async def planner_remove_reasoning_msg_post_reasoning_hook(
-    self: "MetaPlanner",  # pylint: disable=W0613
-    *args: Any,
-    **kwargs: Any,
-) -> None:
-    """Hook func for removing msg for reasoning step"""
-    num_msgs = await self.memory.size()
-    if num_msgs > 1:
-        # remove the msg added by planner_compose_reasoning_pre_reasoning_hook
-        await self.memory.delete(num_msgs - 2)
-
-
-def planner_save_post_action_state(
-    self: "MetaPlanner",
-    action_input: dict[str, Any],
-    tool_output: Optional[Msg],  # pylint: disable=W0613
-) -> None:
-    """Hook func for save state after action step"""
-    if self.state_saving_dir:
-        os.makedirs(self.state_saving_dir, exist_ok=True)
-        time_str = datetime.now().strftime("%Y%m%d%H%M%S")
-        file_path = os.path.join(
-            self.state_saving_dir,
-            "state-post-action-"
-            f"{action_input.get('tool_call').get('name')}-{time_str}.json",
-        )
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(self.state_dict(), f, ensure_ascii=False, indent=4)
 
 
 class MetaPlanner(ReActAgent):
@@ -517,3 +355,165 @@ class MetaPlanner(ReActAgent):
         self.prepare_planner_tools(self.planner_mode)
         if self.in_planner_mode:
             self._update_toolkit_and_sys_prompt()
+
+
+def _infer_planner_stage_with_msg(
+    cur_msg: Msg,
+) -> tuple[PlannerStage, list[str]]:
+    """
+    Infer the planner stage and extract tool names from a message.
+
+    Analyzes a message to determine the current stage of the planner workflow
+    and extracts any tool names if tool calls are present in the message.
+
+    Args:
+        cur_msg (Msg): The message to analyze for stage inference.
+
+    Returns:
+        tuple[PlannerStage, list[str]]: A tuple containing:
+            - PlannerStage: One of "pre_reasoning", "post_reasoning", or
+                "post_action"
+            - list[str]: List of tool names found in tool_use or
+                tool_result blocks
+
+    Note:
+        - "pre_reasoning": System role messages with string content
+        - "post_reasoning": Messages with tool_use blocks or plain text content
+        - "post_action": Messages with tool_result blocks
+        - Tool names are extracted from both tool_use and tool_result blocks
+    """
+    blocks = cur_msg.content
+    if isinstance(blocks, str) and cur_msg.role in ["system", "user"]:
+        return "pre_reasoning", []
+
+    cur_tool_names = [
+        str(b.get("name", "no_name_tool"))
+        for b in blocks
+        if b["type"] in ["tool_use", "tool_result"]
+    ]
+    if cur_msg.has_content_blocks("tool_result"):
+        return "post_action", cur_tool_names
+    elif cur_msg.has_content_blocks("tool_use"):
+        return "post_reasoning", cur_tool_names
+    else:
+        return "post_reasoning", cur_tool_names
+
+
+def update_user_input_pre_reply_hook(
+    self: "MetaPlanner",
+    kwargs: dict[str, Any],
+) -> None:
+    """Hook for loading user input to planner notebook"""
+    msg = kwargs.get("msg", None)
+    if isinstance(msg, Msg):
+        msg = [msg]
+    if isinstance(msg, list):
+        for m in msg:
+            self.planner_notebook.user_input.append(m.content)
+
+
+def planner_save_post_reasoning_state(
+    self: "MetaPlanner",
+    reasoning_input: dict[str, Any],  # pylint: disable=W0613
+    reasoning_output: Msg,
+) -> None:
+    """Hook func for save state after reasoning step"""
+    if self.state_saving_dir:
+        os.makedirs(self.state_saving_dir, exist_ok=True)
+        cur_stage, _ = _infer_planner_stage_with_msg(reasoning_output)
+        time_str = datetime.now().strftime("%Y%m%d%H%M%S")
+        file_path = os.path.join(
+            self.state_saving_dir,
+            f"state-{cur_stage}-{time_str}.json",
+        )
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(self.state_dict(), f, ensure_ascii=False, indent=4)
+
+
+async def planner_load_state_pre_reasoning_hook(
+    self: "MetaPlanner",  # pylint: disable=W0613
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    """Hook func for loading saved state after reasoning step"""
+    mem_msgs = await self.memory.get_memory()
+    if len(mem_msgs) > 0:
+        stage, _ = _infer_planner_stage_with_msg(mem_msgs[-1])
+        if stage == "post_reasoning":
+            self.state_loading_reasoning_msg = mem_msgs[-1]
+            # delete the last reasoning message to avoid error when
+            # calling model in reasoning step
+            await self.memory.delete(len(mem_msgs) - 1)
+
+
+async def planner_load_state_post_reasoning_hook(
+    self: "MetaPlanner",  # pylint: disable=W0613
+    *args: Any,
+    **kwargs: Any,
+) -> Msg:
+    """Hook func for loading saved state after reasoning step"""
+    if self.state_loading_reasoning_msg is not None:
+        num_msgs = await self.memory.size()
+        # replace the newly generated reasoning message with the loaded one
+        await self.memory.delete(num_msgs - 1)
+        old_reasoning_msg = self.state_loading_reasoning_msg
+        await self.memory.add(old_reasoning_msg)
+        self.state_loading_reasoning_msg = None
+        return old_reasoning_msg
+
+
+async def planner_compose_reasoning_msg_pre_reasoning_hook(
+    self: "MetaPlanner",  # pylint: disable=W0613
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    """Hook func for composing msg for reasoning step"""
+    reasoning_info = (
+        "## All User Input\n{all_user_input}\n\n"
+        "## Session Context\n"
+        "```json\n{notebook_string}\n```\n\n"
+    ).format_map(
+        {
+            "notebook_string": self.planner_notebook.model_dump_json(
+                exclude={"user_input", "full_tool_list"},
+                indent=2,
+            ),
+            "all_user_input": self.planner_notebook.user_input,
+        },
+    )
+    reasoning_msg = Msg(
+        "user",
+        content=reasoning_info,
+        role="user",
+    )
+    await self.memory.add(reasoning_msg)
+
+
+async def planner_remove_reasoning_msg_post_reasoning_hook(
+    self: "MetaPlanner",  # pylint: disable=W0613
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    """Hook func for removing msg for reasoning step"""
+    num_msgs = await self.memory.size()
+    if num_msgs > 1:
+        # remove the msg added by planner_compose_reasoning_pre_reasoning_hook
+        await self.memory.delete(num_msgs - 2)
+
+
+def planner_save_post_action_state(
+    self: "MetaPlanner",
+    action_input: dict[str, Any],
+    tool_output: Optional[Msg],  # pylint: disable=W0613
+) -> None:
+    """Hook func for save state after action step"""
+    if self.state_saving_dir:
+        os.makedirs(self.state_saving_dir, exist_ok=True)
+        time_str = datetime.now().strftime("%Y%m%d%H%M%S")
+        file_path = os.path.join(
+            self.state_saving_dir,
+            "state-post-action-"
+            f"{action_input.get('tool_call').get('name')}-{time_str}.json",
+        )
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(self.state_dict(), f, ensure_ascii=False, indent=4)

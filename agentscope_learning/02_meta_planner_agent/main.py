@@ -35,6 +35,8 @@ import os
 from datetime import datetime
 
 from _meta_planner import MetaPlanner  # pylint: disable=C0411
+from config import config  # pylint: disable=C0411
+
 from agentscope import logger
 from agentscope.agent import UserAgent
 from agentscope.formatter import OpenAIChatFormatter
@@ -48,8 +50,6 @@ from agentscope.tool import (
     execute_shell_command,
     view_text_file,
 )
-from config import config  # pylint: disable=C0411
-
 from utils.logfire_utils import configure_logfire
 
 # Configure logfire if enabled
@@ -186,7 +186,7 @@ async def main() -> None:
             max_iters=config.agent_max_iters,
             planner_mode=config.planner_mode,
         )
-        user = UserAgent("Bob")
+        user = UserAgent("Simon")
         msg = None
         skip_user_input = False
         if args.load_state:
