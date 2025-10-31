@@ -13,7 +13,7 @@ from agentscope.agent import ReActAgent
 from agentscope.formatter import DashScopeChatFormatter, FormatterBase
 from agentscope.memory import InMemoryMemory, MemoryBase
 from agentscope.message import Msg, TextBlock, ToolResultBlock, ToolUseBlock
-from agentscope.model import ChatModelBase, DashScopeChatModel
+from agentscope.model import ChatModelBase
 from agentscope.module import StateModule
 from agentscope.tool import Toolkit, ToolResponse
 
@@ -48,9 +48,9 @@ def rebuild_reactworker(
         memory (Optional[MemoryBase], optional): Memory instance for the agent.
             Defaults to InMemoryMemory() if None.
         model (Optional[ChatModelBase], optional): Chat model instance.
-            Defaults to DashscopeChatModel with deepseek-r1 if None.
+            Defaults to OpenAIChatModel with gpt-4o-mini if None.
         formatter (Optional[FormatterBase], optional): Message formatter.
-            Defaults to DashScopeChatFormatter() if None.
+            Defaults to OpenAIChatFormatter() if None.
         exclude_tools (Optional[list[str]], optional): List of tool names to
             exclude from sharing. Defaults to empty list if None.
 
@@ -58,7 +58,7 @@ def rebuild_reactworker(
         ReActAgent: A configured ReActAgent instance ready for use.
 
     Note:
-        - The default model uses the DASHSCOPE_API_KEY environment variable
+        - The default model uses the OPENAI_API_KEY environment variable
         - Tools are shared based on worker_info.tool_lists minus excluded tools
         - The agent is configured with thinking enabled and streaming support
     """
@@ -70,17 +70,6 @@ def rebuild_reactworker(
         if tool_name not in exclude_tools
     ]
     share_tools(old_toolkit, new_toolkit, tool_list)
-    model = (
-        model
-        if model
-        else DashScopeChatModel(
-            api_key=os.environ.get("DASHSCOPE_API_KEY"),
-            model_name="deepseek-r1",
-            enable_thinking=True,
-            stream=True,
-        )
-    )
-    # Import config here to avoid circular imports
     try:
         from config import config as agent_config
 

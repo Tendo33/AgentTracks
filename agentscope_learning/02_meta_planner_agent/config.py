@@ -90,8 +90,12 @@ class MetaPlannerConfig:
     # Agent Configuration
     # ============================================================================
     agent_name: str = "Task-Meta-Planner"
-    agent_operation_dir: Optional[str] = None  # Defaults to meta_agent_demo_env
-    agent_state_saving_dir: str = "./agent-states"
+    agent_operation_dir: Optional[str] = (
+        "agentscope_learning/02_meta_planner_agent/agent_outputs/meta_planner_agent"  # Defaults to meta_agent_demo_env
+    )
+    agent_state_saving_dir: str = (
+        "agentscope_learning/02_meta_planner_agent/agent_outputs/agent-states"
+    )
     agent_max_iters: int = 100
     agent_worker_max_iters: int = 20
 
@@ -120,12 +124,6 @@ class MetaPlannerConfig:
 
     def __post_init__(self):
         """Validate configuration after initialization."""
-        # Validate required API keys
-        if not self.openai_api_key:
-            raise ValueError(
-                "OPENAI_API_KEY environment variable is required. "
-                "Please set it in your .env file or environment."
-            )
         if not self.tavily_api_key:
             raise ValueError(
                 "TAVILY_API_KEY environment variable is required. "
