@@ -3,27 +3,24 @@
 Coordination handler module for meta planner
 """
 
+import json
 import os
 from pathlib import Path
-import json
-from typing import Optional, Literal, List
+from typing import List, Literal, Optional
+
 from agentscope import logger
-
-from agentscope.module import StateModule
-from agentscope.tool import Toolkit
-from agentscope.memory import InMemoryMemory, MemoryBase
-from agentscope.tool import ToolResponse
-from agentscope.message import Msg, TextBlock, ToolUseBlock, ToolResultBlock
-from agentscope.model import ChatModelBase, DashScopeChatModel
-from agentscope.formatter import FormatterBase, DashScopeChatFormatter
 from agentscope.agent import ReActAgent
+from agentscope.formatter import DashScopeChatFormatter, FormatterBase
+from agentscope.memory import InMemoryMemory, MemoryBase
+from agentscope.message import Msg, TextBlock, ToolResultBlock, ToolUseBlock
+from agentscope.model import ChatModelBase, DashScopeChatModel
+from agentscope.module import StateModule
+from agentscope.tool import Toolkit, ToolResponse
 
-from ._planning_notebook import (
-    WorkerInfo,
-    WorkerResponse,
-)
 from ._planning_notebook import (
     PlannerNoteBook,
+    WorkerInfo,
+    WorkerResponse,
 )
 
 
@@ -83,6 +80,14 @@ def rebuild_reactworker(
             stream=True,
         )
     )
+    # Import config here to avoid circular imports
+    try:
+        from config import config as agent_config
+
+        max_iters = agent_config.agent_worker_max_iters
+    except ImportError:
+        max_iters = int(os.environ.get("AGENT_WORKER_MAX_ITERS", "20"))
+
     return ReActAgent(
         name=worker_info.worker_name,
         sys_prompt=worker_info.sys_prompt,
@@ -90,7 +95,7 @@ def rebuild_reactworker(
         formatter=formatter if formatter else DashScopeChatFormatter(),
         toolkit=new_toolkit,
         memory=InMemoryMemory() if memory is None else memory,
-        max_iters=20,  # hardcoded the max iteration for now
+        max_iters=max_iters,
     )
 
 

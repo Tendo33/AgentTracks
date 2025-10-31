@@ -34,8 +34,8 @@ import json
 import os
 from datetime import datetime
 
-import dotenv
 from _meta_planner import MetaPlanner  # pylint: disable=C0411
+from agentscope import logger
 from agentscope.agent import UserAgent
 from agentscope.formatter import OpenAIChatFormatter
 from agentscope.mcp import StatefulClientBase, StdIOStatefulClient
@@ -48,17 +48,13 @@ from agentscope.tool import (
     execute_shell_command,
     view_text_file,
 )
+from config import config  # pylint: disable=C0411
+
 from utils.logfire_utils import configure_logfire
 
-from agentscope import logger
-
-dotenv.load_dotenv()
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")
-CHAT_MODEL = os.getenv("CHAT_MODEL")
-
-configure_logfire()
+# Configure logfire if enabled
+if config.enable_logfire:
+    configure_logfire()
 
 
 def chunking_too_long_tool_response(
@@ -76,11 +72,11 @@ def chunking_too_long_tool_response(
         tool_response: The tool response to potentially truncate.
 
     Note:
-        The budget is set to approximately 40K tokens (8194 * 5 characters)
+        The budget is configured via TOOL_RESPONSE_BUDGET environment variable
         to ensure responses remain manageable for the language model.
     """
     # Set budget to prevent overwhelming the model with too much content
-    budget = 8194 * 5  # Approximately 40KB of content
+    budget = config.tool_response_budget
 
     for i, block in enumerate(tool_response.content):
         if block["type"] == "text":
@@ -123,7 +119,7 @@ def _add_tool_postprocessing_func(worker_toolkit: Toolkit) -> None:
 
 async def main() -> None:
     """The main entry point for the Meta-planner agent example."""
-    logger.setLevel("DEBUG")
+    logger.setLevel(config.log_level)
     time_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
     planner_toolkit = Toolkit()
@@ -132,35 +128,30 @@ async def main() -> None:
     worker_toolkit.register_tool_function(view_text_file)
     mcp_clients = []
 
-    assert os.getenv("TAVILY_API_KEY") is not None
-    tavily_key = os.getenv("TAVILY_API_KEY")
+    # Setup Tavily MCP client for search functionality
     mcp_clients.append(
         StdIOStatefulClient(
             name="tavily_mcp",
-            command="npx",
-            args=["-y", "tavily-mcp@latest"],
-            env={"TAVILY_API_KEY": tavily_key},
+            command=config.mcp_npx_command,
+            args=["-y", config.mcp_tavily_package],
+            env={"TAVILY_API_KEY": config.tavily_api_key},
         ),
     )
 
     # Note: You can add more MCP/tools for more diverse tasks
 
-    default_working_dir = os.path.join(
-        os.path.dirname(__file__),
-        "meta_agent_demo_env",
-    )
-    agent_working_dir = os.getenv(
-        "AGENT_OPERATION_DIR",
-        default_working_dir,
-    )
+    # Setup working directory for agent operations
+    agent_working_dir = config.get_agent_working_dir()
     os.makedirs(agent_working_dir, exist_ok=True)
+
+    # Setup filesystem MCP client
     mcp_clients.append(
         StdIOStatefulClient(
             name="file_system_mcp",
-            command="npx",
+            command=config.mcp_npx_command,
             args=[
                 "-y",
-                "@modelcontextprotocol/server-filesystem",
+                config.mcp_filesystem_package,
                 agent_working_dir,
             ],
         ),
@@ -175,21 +166,25 @@ async def main() -> None:
         _add_tool_postprocessing_func(worker_toolkit)
 
         agent = MetaPlanner(
-            name="Task-Meta-Planner",
+            name=config.agent_name,
             model=OpenAIChatModel(
-                api_key=OPENAI_API_KEY,
-                model_name=CHAT_MODEL,
-                stream=True,
-                client_args={"base_url": f"{OPENAI_BASE_URL}"},
-                generate_kwargs={"temperature": 0.7, "max_tokens": 32000},
+                api_key=config.openai_api_key,
+                model_name=config.chat_model,
+                stream=config.model_stream,
+                client_args={"base_url": config.openai_base_url},
+                generate_kwargs={
+                    "temperature": config.model_temperature,
+                    "max_tokens": config.model_max_tokens,
+                },
             ),
             formatter=OpenAIChatFormatter(),
             toolkit=planner_toolkit,
             worker_full_toolkit=worker_toolkit,
             agent_working_dir=agent_working_dir,
             memory=InMemoryMemory(),
-            state_saving_dir=f"./agent-states/run-{time_str}",
-            max_iters=100,
+            state_saving_dir=config.get_state_saving_dir(time_str),
+            max_iters=config.agent_max_iters,
+            planner_mode=config.planner_mode,
         )
         user = UserAgent("Bob")
         msg = None

@@ -36,21 +36,53 @@ This approach enables handling sophisticated workflows like data analysis, resea
 
 ## Prerequisites for Running This Example
 
+### Quick Setup
+
+1. **Copy the configuration template**:
+```bash
+cp env.example .env
+```
+
+2. **Edit `.env` file and add your API keys**:
+```bash
+# Required API Keys
+OPENAI_API_KEY=sk-your-openai-api-key-here
+TAVILY_API_KEY=tvly-your-tavily-api-key-here
+```
+
+3. **Optional: Customize other settings** (see `env.example` for all options)
+
 ### Required Environment Variables
 
 ```bash
-# Anthropic API key for the Claude model
-export ANTHROPIC_API_KEY="your_anthropic_api_key"
+# OpenAI API key for model access
+OPENAI_API_KEY="your_openai_api_key"
 
 # Tavily API key for search functionality
-export TAVILY_API_KEY="your_tavily_api_key"
+TAVILY_API_KEY="your_tavily_api_key"
 ```
 
 ### Optional Environment Variables
 
+For a complete list of configuration options, see:
+- **`env.example`** - Detailed configuration template with all options
+- **`AGENT_GUIDE.md`** - Comprehensive guide including configuration explanation
+
+Common optional settings:
 ```bash
-# Custom working directory for agent operations (default: ./meta_agent_demo_env)
-export AGENT_OPERATION_DIR="/path/to/custom/working/directory"
+# Model configuration
+CHAT_MODEL=gpt-4-turbo          # Model name
+MODEL_TEMPERATURE=0.7            # Temperature (0.0-2.0)
+MODEL_MAX_TOKENS=32000           # Max tokens
+
+# Agent configuration  
+AGENT_OPERATION_DIR=/custom/path # Working directory
+AGENT_MAX_ITERS=100              # Max iterations
+PLANNER_MODE=dynamic             # Planning mode (disable/dynamic/enforced)
+
+# Logging
+LOG_LEVEL=DEBUG                  # Log level
+ENABLE_LOGFIRE=false             # Enable logfire
 ```
 
 ## Usage
@@ -127,6 +159,16 @@ If an agent gets stuck or fails:
 
 ## Advanced Customization
 
+For detailed customization guides, advanced topics, and troubleshooting, please refer to **`AGENT_GUIDE.md`**.
+
+Quick links to advanced topics:
+- Configuration management system
+- Custom worker prompts
+- Adding custom tools
+- Multi-MCP client integration
+- State analysis and visualization
+- Performance optimization
+
 ### Adding New Tools
 
 1. Create tool functions following AgentScope patterns
@@ -153,3 +195,12 @@ mcp_clients.append(
 ### System Prompt Modifications
 
 Modify prompts in `_built_in_long_sys_prompt/` to customize agent behavior.
+
+---
+
+## Documentation
+
+- **`README.md`** (this file) - Quick start and overview
+- **`AGENT_GUIDE.md`** - Comprehensive guide with architecture, execution flow, and troubleshooting
+- **`env.example`** - Configuration template with all available options
+- **`config.py`** - Configuration management implementation
