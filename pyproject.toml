@@ -5,6 +5,7 @@ description = "AI Agent框架学习项目 - 通过实际示例学习和比较主
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "agentscope>=1.0.7",
     "agno>=1.2.7",
     "beautifulsoup4>=4.13.3",
     "chainlit>=2.4.301",
