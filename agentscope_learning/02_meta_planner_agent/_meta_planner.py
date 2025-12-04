@@ -8,7 +8,6 @@ import json
 import os
 import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Literal, Optional
 
 from _planning_tools import (  # pylint: disable=C0411
@@ -17,7 +16,7 @@ from _planning_tools import (  # pylint: disable=C0411
     WorkerManager,
     share_tools,
 )
-
+from _planning_tools.prompt import get_meta_planner_sys_prompt
 from agentscope.agent import ReActAgent
 from agentscope.formatter import FormatterBase
 from agentscope.memory import MemoryBase
@@ -330,22 +329,15 @@ class MetaPlanner(ReActAgent):
             for func_dict in self.worker_full_toolkit.get_json_schemas()
         ]
         self.planner_notebook.full_tool_list = full_worker_tool_list
-        with open(
-            Path(__file__).parent
-            / "_built_in_long_sys_prompt"
-            / "meta_planner_sys_prompt.md",
-            "r",
-            encoding="utf-8",
-        ) as f:
-            sys_prompt = f.read()
-        sys_prompt = sys_prompt.format_map(
-            {
-                "tool_list": json.dumps(
-                    full_worker_tool_list,
-                    ensure_ascii=False,
-                ),
-            },
-        )
+
+        tool_list = {
+            "tool_list": json.dumps(
+                full_worker_tool_list,
+                ensure_ascii=False,
+            ),
+        }
+        sys_prompt = get_meta_planner_sys_prompt(tool_list)
+
         self._sys_prompt = sys_prompt  # pylint: disable=W0201
         self.toolkit.update_tool_groups(["planning"], True)
         self.in_planner_mode = True

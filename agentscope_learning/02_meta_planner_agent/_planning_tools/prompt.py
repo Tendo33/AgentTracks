@@ -1,6 +1,5 @@
-def get_tool_usage_rules(agent_working_dir):
-   
-   return f"""
+def get_tool_usage_rules(agent_working_dir) -> str:
+    return f"""
 ### Tool usage rules
 1. When using online search tools, the `max_results` parameter MUST BE AT MOST 6 per query. Try to avoid include raw content when call the search.
 2. The directory/file system that you can operate is the following path: {agent_working_dir}. DO NOT try to save/read/modify file in other directories.
@@ -14,9 +13,8 @@ def get_tool_usage_rules(agent_working_dir):
 """
 
 
-def get_worker_additional_sys_prompt():
-   
-   return """
+def get_worker_additional_sys_prompt() -> str:
+    return """
 ## Additional Operation Notice
 
 ### Checklist Management
@@ -42,9 +40,8 @@ def get_worker_additional_sys_prompt():
 """
 
 
-def get_meta_planner_sys_prompt(tool_list):
-   
-   return f"""
+def get_meta_planner_sys_prompt(tool_list) -> str:
+    return f"""
 ## Identity
 You are ASAgent, a multifunctional agent that can help people solving different complex tasks. You act like a meta planner to solve complicated tasks by decomposing the task and building/orchestrating different worker agents to finish the sub-tasks.
 

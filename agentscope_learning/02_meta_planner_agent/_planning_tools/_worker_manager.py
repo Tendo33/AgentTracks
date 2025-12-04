@@ -5,7 +5,6 @@ Coordination handler module for meta planner
 
 import json
 import os
-from pathlib import Path
 from typing import List, Literal, Optional
 
 from agentscope import logger
@@ -16,6 +15,7 @@ from agentscope.message import Msg, TextBlock, ToolResultBlock, ToolUseBlock
 from agentscope.model import ChatModelBase
 from agentscope.module import StateModule
 from agentscope.tool import Toolkit, ToolResponse
+from prompt import get_tool_usage_rules, get_worker_additional_sys_prompt
 
 from ._planning_notebook import (
     PlannerNoteBook,
@@ -359,27 +359,16 @@ class WorkerManager(StateModule):
                 "list_directory",
             ],
         )
-        with open(
-            Path(__file__).parent.parent
-            / "_built_in_long_sys_prompt"
-            / "_worker_additional_sys_prompt.md",
-            "r",
-            encoding="utf-8",
-        ) as f:
-            additional_worker_prompt = f.read()
-        with open(
-            Path(__file__).parent.parent
-            / "_built_in_long_sys_prompt"
-            / "_tool_usage_rules.md",
-            "r",
-            encoding="utf-8",
-        ) as f:
-            additional_worker_prompt += str(f.read()).format_map(
-                {"agent_working_dir": self.agent_working_dir},
-            )
+
+        additional_worker_prompt = get_worker_additional_sys_prompt()
+
+        tool_usage_rules = get_tool_usage_rules(self.agent_working_dir)
+
         worker = ReActAgent(
             name=worker_name,
-            sys_prompt=(worker_system_prompt + additional_worker_prompt),
+            sys_prompt=(
+                worker_system_prompt + additional_worker_prompt + tool_usage_rules
+            ),
             model=self.worker_model,
             formatter=self.worker_formatter,
             memory=InMemoryMemory(),
