@@ -34,9 +34,6 @@ import json
 import os
 from datetime import datetime
 
-from _meta_planner import MetaPlanner  # pylint: disable=C0411
-from config import config  # pylint: disable=C0411
-
 from agentscope import logger
 from agentscope.agent import UserAgent
 from agentscope.formatter import OpenAIChatFormatter
@@ -50,7 +47,9 @@ from agentscope.tool import (
     execute_shell_command,
     view_text_file,
 )
-from utils.logfire_utils import configure_logfire
+from config import config
+from meta_planner import MetaPlanner
+from planning_tools.logfire_utils import configure_logfire
 
 # Configure logfire if enabled
 if config.enable_logfire:

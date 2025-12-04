@@ -3,17 +3,17 @@
 Planning handler module for meta planner
 """
 
-from typing import Optional, Literal
+from typing import Literal, Optional
 
+from agentscope.message import TextBlock
 from agentscope.module import StateModule
 from agentscope.tool import ToolResponse
-from agentscope.message import TextBlock
 
-from ._planning_notebook import (
+from .planning_notebook import (
     PlannerNoteBook,
+    SubTaskSpecification,
     SubTaskStatus,
     Update,
-    SubTaskSpecification,
 )
 
 

@@ -15,13 +15,13 @@ from agentscope.message import Msg, TextBlock, ToolResultBlock, ToolUseBlock
 from agentscope.model import ChatModelBase
 from agentscope.module import StateModule
 from agentscope.tool import Toolkit, ToolResponse
-from prompt import get_tool_usage_rules, get_worker_additional_sys_prompt
 
-from ._planning_notebook import (
+from .planning_notebook import (
     PlannerNoteBook,
     WorkerInfo,
     WorkerResponse,
 )
+from .prompt import get_tool_usage_rules, get_worker_additional_sys_prompt
 
 
 def rebuild_reactworker(
