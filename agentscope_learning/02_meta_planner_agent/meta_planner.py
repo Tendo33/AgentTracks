@@ -10,19 +10,19 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal, Optional
 
-from _planning_tools import (  # pylint: disable=C0411
-    PlannerNoteBook,
-    RoadmapManager,
-    WorkerManager,
-    share_tools,
-)
-from _planning_tools.prompt import get_meta_planner_sys_prompt
 from agentscope.agent import ReActAgent
 from agentscope.formatter import FormatterBase
 from agentscope.memory import MemoryBase
 from agentscope.message import Msg, TextBlock, ToolResultBlock, ToolUseBlock
 from agentscope.model import ChatModelBase
 from agentscope.tool import Toolkit, ToolResponse
+from planning_tools import (
+    PlannerNoteBook,
+    RoadmapManager,
+    WorkerManager,
+    share_tools,
+)
+from planning_tools.prompt import get_meta_planner_sys_prompt
 
 PlannerStage = Literal["post_reasoning", "post_action", "pre_reasoning"]
 

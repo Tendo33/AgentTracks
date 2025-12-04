@@ -156,11 +156,47 @@ async def main() -> None:
         ),
     )
 
+    
     try:
+        # Connect and register each MCP client individually with error handling
+        connected_clients = []
         for mcp_client in mcp_clients:
-            if isinstance(mcp_client, StatefulClientBase):
-                await mcp_client.connect()
-            await worker_toolkit.register_mcp_client(mcp_client)
+            try:
+                if isinstance(mcp_client, StatefulClientBase):
+                    logger.info(f"Connecting MCP client: {mcp_client.name}")
+                    await mcp_client.connect()
+                    logger.info(f"Successfully connected MCP client: {mcp_client.name}")
+                
+                logger.info(f"Registering tools from MCP client: {mcp_client.name}")
+                await worker_toolkit.register_mcp_client(mcp_client)
+                logger.info(f"Successfully registered tools from: {mcp_client.name}")
+                
+                connected_clients.append(mcp_client)
+                
+            except Exception as e:
+                logger.error(
+                    f"Failed to initialize MCP client '{mcp_client.name}': {e}",
+                    exc_info=True
+                )
+                # Attempt to close the failed client
+                try:
+                    if isinstance(mcp_client, StatefulClientBase):
+                        await mcp_client.close()
+                except Exception as close_error:
+                    logger.warning(
+                        f"Error closing failed MCP client '{mcp_client.name}': {close_error}"
+                    )
+                # Continue with other clients instead of failing completely
+                continue
+        
+        # Update mcp_clients to only include successfully connected ones
+        mcp_clients = connected_clients
+        
+        if not mcp_clients:
+            logger.warning(
+                "No MCP clients were successfully initialized. "
+                "Agent will run with limited tool capabilities."
+            )
 
         _add_tool_postprocessing_func(worker_toolkit)
 
@@ -208,9 +244,17 @@ async def main() -> None:
     except Exception as e:
         logger.exception(e)
     finally:
+        # Clean up MCP clients individually
         for mcp_client in mcp_clients:
             if isinstance(mcp_client, StatefulClientBase):
-                await mcp_client.close()
+                try:
+                    logger.info(f"Closing MCP client: {mcp_client.name}")
+                    await mcp_client.close()
+                    logger.info(f"Successfully closed MCP client: {mcp_client.name}")
+                except Exception as cleanup_error:
+                    logger.warning(
+                        f"Error during cleanup of MCP client '{mcp_client.name}': {cleanup_error}"
+                    )
 
 
 def parse_args() -> argparse.Namespace:
