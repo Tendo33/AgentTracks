@@ -234,14 +234,14 @@ async def main() -> None:
             skip_user_input = True
 
         # 打印工具集的 JSON schemas（用于调试）
-        print(
-            json.dumps(planner_toolkit.get_json_schemas(), indent=4, ensure_ascii=False)
-        )
-        print("====================================================")
-        print(
-            json.dumps(worker_toolkit.get_json_schemas(), indent=4, ensure_ascii=False)
-        )
-        print("====================================================")
+        # print(
+        #     json.dumps(planner_toolkit.get_json_schemas(), indent=4, ensure_ascii=False)
+        # )
+        # print("====================================================")
+        # print(
+        #     json.dumps(worker_toolkit.get_json_schemas(), indent=4, ensure_ascii=False)
+        # )
+        # print("====================================================")
 
         # 主交互循环
         while True:
