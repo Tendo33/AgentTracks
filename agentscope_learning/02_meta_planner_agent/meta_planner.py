@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Meta Planner agent class that can handle complicated tasks with
-planning-execution pattern.
+Meta Planner agent 类，能够使用规划-执行模式处理复杂任务。
 """
 
 import json
@@ -29,11 +28,10 @@ PlannerStage = Literal["post_reasoning", "post_action", "pre_reasoning"]
 
 class MetaPlanner(ReActAgent):
     """
-    A meta-planning agent that extends ReActAgent with enhanced planning
-    capabilities. The MetaPlanner is designed to handle complex multistep
-    planning tasks by leveraging a combination of reasoning and action
-    capabilities. The subtasks will be solved by dynamically create ReAct
-    worker agent and provide it with necessary tools.
+    元规划 agent，扩展 ReActAgent 并增强规划能力。
+
+    MetaPlanner 设计用于通过结合推理和行动能力来处理复杂的多步骤规划任务。
+    子任务将通过动态创建 ReAct 工作器 agent 并为其提供必要的工具来解决。
     """
 
     def __init__(
@@ -51,33 +49,31 @@ class MetaPlanner(ReActAgent):
         planner_mode: Literal["disable", "dynamic", "enforced"] = "dynamic",
     ) -> None:
         """
-        Initialize the MetaPlanner with the given parameters.
+        使用给定参数初始化 MetaPlanner。
 
-        Args:
+        参数：
             name (str):
-                The name identifier for this agent instance.
+                此 agent 实例的名称标识符。
             model (ChatModelBase):
-                The primary chat model used for reasoning and response
-                generation.
+                用于推理和响应生成的主要聊天模型。
             worker_full_toolkit (Toolkit):
-                Complete set of tools available to the worker agent.
+                工作器 agent 可用的完整工具集。
             formatter (FormatterBase):
-                Formatter for formatting messages to the model API provider's
-                format.
+                用于将消息格式化为模型 API 提供商格式的格式化器。
             memory (MemoryBase):
-                Memory system for storing conversation history and context.
+                用于存储对话历史和上下文的内存系统。
             toolkit (Toolkit):
-                Toolkit for managing tools available to the agent.
+                用于管理 agent 可用工具的工具集。
             agent_working_dir (str):
-                Directory for agent's file operations.
+                agent 文件操作的目录。
             sys_prompt (str, optional):
-                Meta planner's system prompt
+                元规划器的系统提示
             max_iters (int, optional):
-                Maximum number of planning iterations. Defaults to 10.
+                规划迭代的最大次数。默认为 10。
             state_saving_dir (Optional[str], optional):
-                Directory to save the agent's state. Defaults to None.
+                保存 agent 状态的目录。默认为 None。
             planner_mode (bool, optional):
-                Enable planner mode for solving tasks. Defaults to True.
+                启用规划器模式以解决任务。默认为 True。
         """
         name = "Task-Meta-Planner" if name is None else name
         if sys_prompt is None:
@@ -88,7 +84,7 @@ class MetaPlanner(ReActAgent):
                 "change yourself to a more long-term planning mode."
             )
 
-        # Call super().__init__() early to initialize StateModule attributes
+        # 提前调用 super().__init__() 以初始化 StateModule 属性
         super().__init__(
             name=name,
             sys_prompt=sys_prompt,
@@ -99,40 +95,40 @@ class MetaPlanner(ReActAgent):
             max_iters=max_iters,
         )
 
-        self.agent_working_dir_root = agent_working_dir
-        self.task_dir = self.agent_working_dir_root
-        self.worker_full_toolkit = worker_full_toolkit
-        self.state_saving_dir = state_saving_dir
+        self.agent_working_dir_root = agent_working_dir  # agent 工作目录根路径
+        self.task_dir = self.agent_working_dir_root  # 任务目录
+        self.worker_full_toolkit = worker_full_toolkit  # 工作器完整工具集
+        self.state_saving_dir = state_saving_dir  # 状态保存目录
 
-        # if we load a trajectory and the last step was reasoning,
-        # then we need a buffer to store the reasoning message and replace
-        # with this message after reasoning
+        # 如果我们加载了一个轨迹且最后一步是推理，
+        # 那么我们需要一个缓冲区来存储推理消息，并在推理后替换此消息
         self.state_loading_reasoning_msg: Optional[Msg] = None
 
-        # for debugging and state resume, we need a flag to indicate
-        self.planner_mode = planner_mode
-        self.in_planner_mode = False
+        # 为了调试和状态恢复，我们需要一个标志来指示
+        self.planner_mode = planner_mode  # 规划器模式
+        self.in_planner_mode = False  # 是否处于规划器模式
         self.register_state("planner_mode")
         self.register_state("in_planner_mode")
 
         self.planner_notebook = None
         self.roadmap_manager, self.worker_manager = None, None
         if planner_mode in ["dynamic", "enforced"]:
-            self.planner_notebook = PlannerNoteBook()
-            self.prepare_planner_tools(planner_mode)
+            self.planner_notebook = PlannerNoteBook()  # 创建规划器笔记本
+            self.prepare_planner_tools(planner_mode)  # 准备规划器工具
+            # 注册规划器笔记本状态
             self.register_state(
                 "planner_notebook",
                 lambda x: x.model_dump(),
                 lambda x: PlannerNoteBook(**x),
             )
 
-        # pre-reply hook
+        # pre-reply hook（回复前钩子）
         self.register_instance_hook(
             "pre_reply",
             "update_user_input_to_notebook_pre_reply_hook",
             update_user_input_pre_reply_hook,
         )
-        # pre-reasoning hook
+        # pre-reasoning hook（推理前钩子）
         self.register_instance_hook(
             "pre_reasoning",
             "planner_load_state_pre_reasoning_hook",
@@ -143,7 +139,7 @@ class MetaPlanner(ReActAgent):
             "planner_compose_reasoning_msg_pre_reasoning_hook",
             planner_compose_reasoning_msg_pre_reasoning_hook,
         )
-        # post_reasoning hook
+        # post_reasoning hook（推理后钩子）
         self.register_instance_hook(
             "post_reasoning",
             "planner_load_state_post_reasoning_hook",
@@ -159,7 +155,7 @@ class MetaPlanner(ReActAgent):
             "save_state_post_reasoning_hook",
             planner_save_post_reasoning_state,
         )
-        # post_action_hook
+        # post_action_hook（行动后钩子）
         self.register_instance_hook(
             "post_acting",
             "save_state_post_action_hook",
@@ -171,12 +167,14 @@ class MetaPlanner(ReActAgent):
         planner_mode: Literal["disable", "enforced", "dynamic"],
     ) -> None:
         """
-        Prepare tool to planning depending on the selected mode.
+        根据选定的模式准备规划工具。
         """
+        # 创建路线图管理器
         self.roadmap_manager = RoadmapManager(
             planner_notebook=self.planner_notebook,
         )
 
+        # 创建工作器管理器
         self.worker_manager = WorkerManager(
             worker_model=self.model,
             worker_formatter=self.formatter,
@@ -184,13 +182,14 @@ class MetaPlanner(ReActAgent):
             agent_working_dir=self.task_dir,
             worker_full_toolkit=self.worker_full_toolkit,
         )
-        # clean
+        # 清理现有的规划工具组
         self.toolkit.remove_tool_groups("planning")
+        # 创建新的规划工具组
         self.toolkit.create_tool_group(
             "planning",
             "Tool group for planning capability",
         )
-        # re-register planning tool to enable loading the correct info
+        # 重新注册规划工具以启用加载正确的信息
         self.toolkit.register_tool_function(
             self.roadmap_manager.decompose_task_and_build_roadmap,
             group_name="planning",
@@ -217,19 +216,21 @@ class MetaPlanner(ReActAgent):
         )
 
         if planner_mode == "dynamic":
+            # 如果还没有注册，注册进入复杂任务解决模式的工具
             if "enter_solving_complicated_task_mode" not in self.toolkit.tools:
                 self.toolkit.register_tool_function(
                     self.enter_solving_complicated_task_mode,
                 )
-            # Only activate after agent decides to enter the
-            # planning-execution mode
+            # 仅在 agent 决定进入规划-执行模式后才激活
             self.toolkit.update_tool_groups(["planning"], False)
         elif planner_mode == "enforced":
+            # 强制模式：直接激活规划工具组
             self.toolkit.update_tool_groups(["planning"], True)
-            # use the self.agent_working_dir as working dir
+            # 使用 self.agent_working_dir 作为工作目录
             self._update_toolkit_and_sys_prompt()
 
     def _ensure_file_system_functions(self) -> None:
+        """确保文件系统功能可用"""
         required_tool_list = [
             "read_file",
             "write_file",
@@ -239,12 +240,14 @@ class MetaPlanner(ReActAgent):
             "directory_tree",
             "list_allowed_directories",
         ]
+        # 检查所有必需的工具是否都在工作器工具集中
         for tool_name in required_tool_list:
             if tool_name not in self.worker_full_toolkit.tools:
                 raise ValueError(
                     f"{tool_name} must be in the worker toolkit and "
                     "its tool group must be active for complicated.",
                 )
+        # 将必需的工具共享给规划器工具集
         share_tools(self.worker_full_toolkit, self.toolkit, required_tool_list)
 
     async def enter_solving_complicated_task_mode(
@@ -265,7 +268,7 @@ class MetaPlanner(ReActAgent):
                 this name will be used to create a directory, so try to
                 use "_" instead of space between words, e.g. "A_NEW_TASK".
         """
-        # build directory for the task
+        # 为任务构建目录
         self._ensure_file_system_functions()
         self.task_dir = os.path.join(
             self.agent_working_dir_root,
@@ -273,6 +276,7 @@ class MetaPlanner(ReActAgent):
         )
         self.worker_manager.agent_working_dir = self.task_dir
 
+        # 创建任务目录的工具使用块
         create_task_dir = ToolUseBlock(
             type="tool_use",
             id=str(uuid.uuid4()),
@@ -281,7 +285,9 @@ class MetaPlanner(ReActAgent):
                 "path": self.task_dir,
             },
         )
+        # 调用工具函数创建目录
         tool_res = await self.toolkit.call_tool_function(create_task_dir)
+        # 构造工具结果消息
         tool_res_msg = Msg(
             "system",
             content=[
@@ -294,11 +300,12 @@ class MetaPlanner(ReActAgent):
             ],
             role="system",
         )
+        # 将流式结果转换为工具结果块
         async for chunk in tool_res:
-            # Turn into a tool result block
             tool_res_msg.content[0]["output"] = chunk.content
         await self.print(tool_res_msg)
 
+        # 更新工具集和系统提示
         self._update_toolkit_and_sys_prompt()
         return ToolResponse(
             metadata={"success": True},
@@ -317,7 +324,8 @@ class MetaPlanner(ReActAgent):
         )
 
     def _update_toolkit_and_sys_prompt(self) -> None:
-        # change agent settings for solving complicated task
+        """更新工具集和系统提示以解决复杂任务"""
+        # 获取工作器完整工具列表
         full_worker_tool_list = [
             {
                 "tool_name": func_dict.get("function", {}).get("name", ""),
@@ -330,20 +338,23 @@ class MetaPlanner(ReActAgent):
         ]
         self.planner_notebook.full_tool_list = full_worker_tool_list
 
+        # 准备工具列表用于系统提示
         tool_list = {
             "tool_list": json.dumps(
                 full_worker_tool_list,
                 ensure_ascii=False,
             ),
         }
+        # 获取元规划器系统提示
         sys_prompt = get_meta_planner_sys_prompt(tool_list)
 
         self._sys_prompt = sys_prompt  # pylint: disable=W0201
+        # 激活规划工具组
         self.toolkit.update_tool_groups(["planning"], True)
         self.in_planner_mode = True
 
     def resume_planner_tools(self) -> None:
-        """Resume the planner notebook for tools"""
+        """恢复规划器笔记本的工具"""
         self.prepare_planner_tools(self.planner_mode)
         if self.in_planner_mode:
             self._update_toolkit_and_sys_prompt()
@@ -353,36 +364,36 @@ def _infer_planner_stage_with_msg(
     cur_msg: Msg,
 ) -> tuple[PlannerStage, list[str]]:
     """
-    Infer the planner stage and extract tool names from a message.
+    从消息中推断规划器阶段并提取工具名称。
 
-    Analyzes a message to determine the current stage of the planner workflow
-    and extracts any tool names if tool calls are present in the message.
+    分析消息以确定规划器工作流的当前阶段，
+    如果消息中存在工具调用，则提取任何工具名称。
 
-    Args:
-        cur_msg (Msg): The message to analyze for stage inference.
+    参数：
+        cur_msg (Msg): 要分析以进行阶段推断的消息。
 
-    Returns:
-        tuple[PlannerStage, list[str]]: A tuple containing:
-            - PlannerStage: One of "pre_reasoning", "post_reasoning", or
-                "post_action"
-            - list[str]: List of tool names found in tool_use or
-                tool_result blocks
+    返回：
+        tuple[PlannerStage, list[str]]: 包含以下内容的元组：
+            - PlannerStage: "pre_reasoning"、"post_reasoning" 或 "post_action" 之一
+            - list[str]: 在 tool_use 或 tool_result 块中找到的工具名称列表
 
-    Note:
-        - "pre_reasoning": System role messages with string content
-        - "post_reasoning": Messages with tool_use blocks or plain text content
-        - "post_action": Messages with tool_result blocks
-        - Tool names are extracted from both tool_use and tool_result blocks
+    注意：
+        - "pre_reasoning": 带有字符串内容的系统角色消息
+        - "post_reasoning": 带有 tool_use 块或纯文本内容的消息
+        - "post_action": 带有 tool_result 块的消息
+        - 工具名称从 tool_use 和 tool_result 块中提取
     """
     blocks = cur_msg.content
     if isinstance(blocks, str) and cur_msg.role in ["system", "user"]:
         return "pre_reasoning", []
 
+    # 提取工具名称
     cur_tool_names = [
         str(b.get("name", "no_name_tool"))
         for b in blocks
         if b["type"] in ["tool_use", "tool_result"]
     ]
+    # 根据内容块类型确定阶段
     if cur_msg.has_content_blocks("tool_result"):
         return "post_action", cur_tool_names
     elif cur_msg.has_content_blocks("tool_use"):
@@ -395,7 +406,7 @@ def update_user_input_pre_reply_hook(
     self: "MetaPlanner",
     kwargs: dict[str, Any],
 ) -> None:
-    """Hook for loading user input to planner notebook"""
+    """将用户输入加载到规划器笔记本的钩子"""
     msg = kwargs.get("msg", None)
     if isinstance(msg, Msg):
         msg = [msg]
@@ -409,7 +420,7 @@ def planner_save_post_reasoning_state(
     reasoning_input: dict[str, Any],  # pylint: disable=W0613
     reasoning_output: Msg,
 ) -> None:
-    """Hook func for save state after reasoning step"""
+    """推理步骤后保存状态的钩子函数"""
     if self.state_saving_dir:
         os.makedirs(self.state_saving_dir, exist_ok=True)
         cur_stage, _ = _infer_planner_stage_with_msg(reasoning_output)
@@ -427,14 +438,13 @@ async def planner_load_state_pre_reasoning_hook(
     *args: Any,
     **kwargs: Any,
 ) -> None:
-    """Hook func for loading saved state after reasoning step"""
+    """推理步骤前加载已保存状态的钩子函数"""
     mem_msgs = await self.memory.get_memory()
     if len(mem_msgs) > 0:
         stage, _ = _infer_planner_stage_with_msg(mem_msgs[-1])
         if stage == "post_reasoning":
             self.state_loading_reasoning_msg = mem_msgs[-1]
-            # delete the last reasoning message to avoid error when
-            # calling model in reasoning step
+            # 删除最后一条推理消息，以避免在推理步骤中调用模型时出错
             await self.memory.delete(len(mem_msgs) - 1)
 
 
@@ -443,10 +453,10 @@ async def planner_load_state_post_reasoning_hook(
     *args: Any,
     **kwargs: Any,
 ) -> Msg:
-    """Hook func for loading saved state after reasoning step"""
+    """推理步骤后加载已保存状态的钩子函数"""
     if self.state_loading_reasoning_msg is not None:
         num_msgs = await self.memory.size()
-        # replace the newly generated reasoning message with the loaded one
+        # 用加载的消息替换新生成的推理消息
         await self.memory.delete(num_msgs - 1)
         old_reasoning_msg = self.state_loading_reasoning_msg
         await self.memory.add(old_reasoning_msg)
@@ -459,7 +469,7 @@ async def planner_compose_reasoning_msg_pre_reasoning_hook(
     *args: Any,
     **kwargs: Any,
 ) -> None:
-    """Hook func for composing msg for reasoning step"""
+    """为推理步骤组合消息的钩子函数"""
     reasoning_info = (
         "## All User Input\n{all_user_input}\n\n"
         "## Session Context\n"
@@ -486,10 +496,10 @@ async def planner_remove_reasoning_msg_post_reasoning_hook(
     *args: Any,
     **kwargs: Any,
 ) -> None:
-    """Hook func for removing msg for reasoning step"""
+    """推理步骤后移除消息的钩子函数"""
     num_msgs = await self.memory.size()
     if num_msgs > 1:
-        # remove the msg added by planner_compose_reasoning_pre_reasoning_hook
+        # 移除由 planner_compose_reasoning_pre_reasoning_hook 添加的消息
         await self.memory.delete(num_msgs - 2)
 
 
@@ -498,7 +508,7 @@ def planner_save_post_action_state(
     action_input: dict[str, Any],
     tool_output: Optional[Msg],  # pylint: disable=W0613
 ) -> None:
-    """Hook func for save state after action step"""
+    """行动步骤后保存状态的钩子函数"""
     if self.state_saving_dir:
         os.makedirs(self.state_saving_dir, exist_ok=True)
         time_str = datetime.now().strftime("%Y%m%d%H%M%S")

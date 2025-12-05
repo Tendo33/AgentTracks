@@ -1,53 +1,53 @@
 # -*- coding: utf-8 -*-
-"""Configuration management for Meta Planner Agent.
+"""Meta Planner Agent 的配置管理模块。
 
-This module centralizes all configuration parameters for the Meta Planner Agent,
-loading values from environment variables with sensible defaults.
+本模块集中了 Meta Planner Agent 的所有配置参数，
+从环境变量加载值，并提供合理的默认值。
 
-Environment Variables:
-    # Required API Keys
-    OPENAI_API_KEY: OpenAI API key for model access
-    TAVILY_API_KEY: Tavily API key for search functionality
+环境变量：
+    # 必需的 API 密钥
+    OPENAI_API_KEY: OpenAI API 密钥用于模型访问
+    TAVILY_API_KEY: Tavily API 密钥用于搜索功能
 
-    # Optional Model Configuration
-    OPENAI_BASE_URL: Base URL for OpenAI API (default: https://api.openai.com/v1)
-    CHAT_MODEL: Model name to use (default: gpt-4-turbo)
-    MODEL_TEMPERATURE: Model temperature (default: 0.7)
-    MODEL_MAX_TOKENS: Maximum tokens per generation (default: 32000)
-    MODEL_STREAM: Enable streaming responses (default: true)
+    # 可选的模型配置
+    OPENAI_BASE_URL: OpenAI API 的基础 URL（默认：https://api.openai.com/v1）
+    CHAT_MODEL: 要使用的模型名称（默认：gpt-4-turbo）
+    MODEL_TEMPERATURE: 模型温度（默认：0.7）
+    MODEL_MAX_TOKENS: 每次生成的最大 token 数（默认：32000）
+    MODEL_STREAM: 启用流式响应（默认：true）
 
-    # Optional Agent Configuration
-    AGENT_OPERATION_DIR: Custom working directory for agent operations
-    AGENT_STATE_SAVING_DIR: Directory to save agent states (default: ./agent-states)
-    AGENT_MAX_ITERS: Maximum reasoning-action iterations (default: 100)
-    AGENT_WORKER_MAX_ITERS: Maximum worker iterations (default: 20)
+    # 可选的 Agent 配置
+    AGENT_OPERATION_DIR: agent 操作的自定义工作目录
+    AGENT_STATE_SAVING_DIR: 保存 agent 状态的目录（默认：./agent-states）
+    AGENT_MAX_ITERS: 推理-行动迭代的最大次数（默认：100）
+    AGENT_WORKER_MAX_ITERS: 工作器迭代的最大次数（默认：20）
 
-    # Optional Planner Configuration
-    PLANNER_MODE: Planning mode (default: dynamic)
-                  Options: disable, dynamic, enforced
+    # 可选的规划器配置
+    PLANNER_MODE: 规划模式（默认：dynamic）
+                  选项：disable, dynamic, enforced
 
-    # Optional Tool Configuration
-    TOOL_RESPONSE_BUDGET: Maximum characters in tool responses (default: 40970)
+    # 可选的工具配置
+    TOOL_RESPONSE_BUDGET: 工具响应中的最大字符数（默认：40970）
 
-    # Optional Logging Configuration
-    LOG_LEVEL: Logging level (default: DEBUG)
-               Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
-    ENABLE_LOGFIRE: Enable logfire logging (default: false)
+    # 可选的日志配置
+    LOG_LEVEL: 日志级别（默认：DEBUG）
+               选项：DEBUG, INFO, WARNING, ERROR, CRITICAL
+    ENABLE_LOGFIRE: 启用 logfire 日志（默认：false）
 
-    # Optional MCP Configuration
-    MCP_NPX_COMMAND: NPX command for MCP clients (default: npx)
-    MCP_TAVILY_PACKAGE: Tavily MCP package (default: tavily-mcp@latest)
-    MCP_FILESYSTEM_PACKAGE: Filesystem MCP package
-                            (default: @modelcontextprotocol/server-filesystem)
+    # 可选的 MCP 配置
+    MCP_NPX_COMMAND: MCP 客户端的 NPX 命令（默认：npx）
+    MCP_TAVILY_PACKAGE: Tavily MCP 包（默认：tavily-mcp@latest）
+    MCP_FILESYSTEM_PACKAGE: 文件系统 MCP 包
+                            （默认：@modelcontextprotocol/server-filesystem）
 
-Usage:
+使用方法：
     from config import config
 
-    # Access configuration values
+    # 访问配置值
     api_key = config.openai_api_key
     model_name = config.chat_model
 
-    # Get agent working directory
+    # 获取 agent 工作目录
     working_dir = config.get_agent_working_dir()
 """
 
@@ -58,17 +58,16 @@ from typing import Literal, Optional
 
 import dotenv
 
-# Load environment variables from .env file
+# 从 .env 文件加载环境变量
 dotenv.load_dotenv()
 
 
 @dataclass
 class MetaPlannerConfig:
-    """Configuration dataclass for Meta Planner Agent.
+    """Meta Planner Agent 的配置数据类。
 
-    This class provides a centralized configuration interface with type hints
-    and validation. All values are loaded from environment variables with
-    sensible defaults.
+    此类提供了一个集中的配置接口，带有类型提示和验证。
+    所有值都从环境变量加载，并带有合理的默认值。
     """
 
     # ============================================================================
@@ -123,14 +122,14 @@ class MetaPlannerConfig:
     mcp_filesystem_package: str = "@modelcontextprotocol/server-filesystem"
 
     def __post_init__(self):
-        """Validate configuration after initialization."""
+        """初始化后验证配置。"""
         if not self.tavily_api_key:
             raise ValueError(
                 "TAVILY_API_KEY environment variable is required. "
                 "Please set it in your .env file or environment."
             )
 
-        # Validate planner mode
+        # 验证规划器模式
         valid_modes = ["disable", "dynamic", "enforced"]
         if self.planner_mode not in valid_modes:
             raise ValueError(
@@ -138,7 +137,7 @@ class MetaPlannerConfig:
                 f"Must be one of: {', '.join(valid_modes)}"
             )
 
-        # Validate log level
+        # 验证日志级别
         valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if self.log_level.upper() not in valid_log_levels:
             raise ValueError(
@@ -148,37 +147,36 @@ class MetaPlannerConfig:
         self.log_level = self.log_level.upper()
 
     def get_agent_working_dir(self) -> str:
-        """Get the agent working directory path.
+        """获取 agent 工作目录路径。
 
-        Returns the configured agent operation directory, or defaults to
-        'meta_agent_demo_env' in the current module's directory.
+        返回配置的 agent 操作目录，或默认为当前模块目录中的 'meta_agent_demo_env'。
 
-        Returns:
-            str: Absolute path to the agent working directory
+        返回：
+            str: agent 工作目录的绝对路径
         """
         if self.agent_operation_dir:
             return os.path.abspath(self.agent_operation_dir)
 
-        # Default to meta_agent_demo_env in the same directory as this config
+        # 默认为与此配置相同目录中的 meta_agent_demo_env
         default_dir = Path(__file__).parent / "meta_agent_demo_env"
         return str(default_dir.absolute())
 
     def get_state_saving_dir(self, time_str: str) -> str:
-        """Get the state saving directory for a specific run.
+        """获取特定运行的状态保存目录。
 
-        Args:
-            time_str: Timestamp string to identify the run
+        参数：
+            time_str: 用于标识运行的时间戳字符串
 
-        Returns:
-            str: Path to the state saving directory for this run
+        返回：
+            str: 此运行的状态保存目录路径
         """
         return os.path.join(self.agent_state_saving_dir, f"run-{time_str}")
 
     def to_dict(self) -> dict:
-        """Convert configuration to dictionary.
+        """将配置转换为字典。
 
-        Returns:
-            dict: Configuration as a dictionary
+        返回：
+            dict: 配置作为字典
         """
         return {
             "openai_api_key": "***" if self.openai_api_key else None,
@@ -204,14 +202,14 @@ class MetaPlannerConfig:
 
 
 def _parse_bool(value: Optional[str], default: bool = False) -> bool:
-    """Parse a boolean value from environment variable string.
+    """从环境变量字符串解析布尔值。
 
-    Args:
-        value: String value from environment variable
-        default: Default value if parsing fails
+    参数：
+        value: 来自环境变量的字符串值
+        default: 解析失败时的默认值
 
-    Returns:
-        bool: Parsed boolean value
+    返回：
+        bool: 解析的布尔值
     """
     if value is None:
         return default
@@ -219,14 +217,14 @@ def _parse_bool(value: Optional[str], default: bool = False) -> bool:
 
 
 def _parse_int(value: Optional[str], default: int) -> int:
-    """Parse an integer value from environment variable string.
+    """从环境变量字符串解析整数值。
 
-    Args:
-        value: String value from environment variable
-        default: Default value if parsing fails
+    参数：
+        value: 来自环境变量的字符串值
+        default: 解析失败时的默认值
 
-    Returns:
-        int: Parsed integer value
+    返回：
+        int: 解析的整数值
     """
     if value is None:
         return default
@@ -237,14 +235,14 @@ def _parse_int(value: Optional[str], default: int) -> int:
 
 
 def _parse_float(value: Optional[str], default: float) -> float:
-    """Parse a float value from environment variable string.
+    """从环境变量字符串解析浮点值。
 
-    Args:
-        value: String value from environment variable
-        default: Default value if parsing fails
+    参数：
+        value: 来自环境变量的字符串值
+        default: 解析失败时的默认值
 
-    Returns:
-        float: Parsed float value
+    返回：
+        float: 解析的浮点值
     """
     if value is None:
         return default
@@ -255,17 +253,16 @@ def _parse_float(value: Optional[str], default: float) -> float:
 
 
 def load_config() -> MetaPlannerConfig:
-    """Load configuration from environment variables.
+    """从环境变量加载配置。
 
-    This function reads all configuration values from environment variables
-    and constructs a MetaPlannerConfig object with proper type conversion
-    and validation.
+    此函数从环境变量读取所有配置值，
+    并构造一个带有适当类型转换和验证的 MetaPlannerConfig 对象。
 
-    Returns:
-        MetaPlannerConfig: Validated configuration object
+    返回：
+        MetaPlannerConfig: 验证过的配置对象
 
-    Raises:
-        ValueError: If required environment variables are missing or invalid
+    异常：
+        ValueError: 如果缺少必需的环境变量或无效
     """
     return MetaPlannerConfig(
         # Required API Keys
@@ -299,11 +296,11 @@ def load_config() -> MetaPlannerConfig:
     )
 
 
-# Global configuration instance
+# 全局配置实例
 config = load_config()
 
 
-# Export commonly used values for convenience
+# 为方便起见导出常用值
 __all__ = [
     "config",
     "MetaPlannerConfig",

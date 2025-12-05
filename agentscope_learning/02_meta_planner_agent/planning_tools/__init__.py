@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""planning tools"""
+"""规划工具模块"""
 
 from .planning_notebook import (
     PlannerNoteBook,

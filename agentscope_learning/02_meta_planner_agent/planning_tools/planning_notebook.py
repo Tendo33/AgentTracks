@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=E0213
 """
-Data structures about the roadmap for complicated tasks
+复杂任务路线图的数据结构
 """
 
 from datetime import datetime
@@ -11,10 +11,10 @@ from pydantic import BaseModel, Field, field_validator
 
 def get_current_time_message() -> str:
     """
-    Returns the current time as a formatted string.
+    返回当前时间作为格式化字符串。
 
-    Returns:
-        str: The current time formatted as 'YYYY-MM-DD HH:MM:SS'.
+    返回：
+        str: 格式化为 'YYYY-MM-DD HH:MM:SS' 的当前时间。
     """
     return f"Current time is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
@@ -77,21 +77,20 @@ WORKER_FILE_COLLECTION_INSTRUCTION = (
 
 class WorkerResponse(BaseModel):
     """
-    Represents the response structure from a worker agent after task execution.
+    表示工作器 agent 任务执行后的响应结构。
 
-    This class defines the expected format for worker responses, including
-    progress summaries, next steps, tool usage information, and task
-    completion status.
+    此类定义工作器响应的预期格式，包括
+    进度摘要、下一步、工具使用信息和任务完成状态。
 
-    Attributes:
+    属性：
         subtask_progress_summary (str):
-            Comprehensive summary report of task execution.
+            任务执行的综合摘要报告。
         next_step (str):
-            Description of planned next actions if task is incomplete.
+            如果任务未完成，则计划的下一步操作的描述。
         generated_files (dict):
-            Dictionary mapping file paths to descriptions of generated files.
+            将文件路径映射到生成文件描述的字典。
         task_done (bool):
-            Flag indicating whether the task has been completed.
+            指示任务是否已完成的标志。
     """
 
     subtask_progress_summary: str = Field(
@@ -113,18 +112,18 @@ class WorkerResponse(BaseModel):
 
 
 class Update(BaseModel):
-    """Represents an update record from a worker during task execution.
+    """表示任务执行期间来自工作器的更新记录。
 
-    This class tracks progress updates from workers as they work on subtasks,
-    including status changes, progress summaries, and execution details.
+    此类跟踪工作器在处理子任务时的进度更新，
+    包括状态更改、进度摘要和执行详细信息。
 
-    Attributes:
-        reason_for_status (str): Explanation for the current status.
-        task_done (bool): Whether the task has been completed.
-        subtask_progress_summary (str): Summary of progress made.
-        next_step (str): Description of planned next actions.
-        worker (str): Identifier of the worker providing the update.
-        attempt_idx (int): Index of the current attempt.
+    属性：
+        reason_for_status (str): 当前状态的解释。
+        task_done (bool): 任务是否已完成。
+        subtask_progress_summary (str): 已取得进展的摘要。
+        next_step (str): 计划的下一步操作的描述。
+        worker (str): 提供更新的工作器的标识符。
+        attempt_idx (int): 当前尝试的索引。
     """
 
     reason_for_status: str
@@ -142,38 +141,38 @@ class Update(BaseModel):
         mode="before",
     )
     def _stringify(cls, v: Any) -> str:
-        """ensure the attributes are string"""
+        """确保属性是字符串"""
         if v is None:
             return ""
         return str(v)
 
 
 class WorkerInfo(BaseModel):
-    """Contains information about a worker agent assigned to a subtask.
+    """包含分配给子任务的工作器 agent 的信息。
 
-    This class stores metadata about worker agents, including their
-    capabilities, creation type, and configuration details.
+    此类存储有关工作器 agent 的元数据，包括它们的
+    能力、创建类型和配置详细信息。
 
-    Attributes:
+    属性：
         worker_name (str):
-            Name identifier of the worker.
+            工作器的名称标识符。
         status (str):
-            Current status of the worker.
+            工作器的当前状态。
         create_type (Literal["built-in", "dynamic-built"]):
-            How the worker was created.
+            工作器的创建方式。
         description (str):
-            Description of the worker's purpose and capabilities.
+            工作器用途和能力的描述。
         tool_lists (List[str]):
-            List of tools available to this worker.
+            此工作器可用的工具列表。
         sys_prompt (str):
-            System prompt used to configure the worker.
+            用于配置工作器的系统提示。
     """
 
     worker_name: str = ""
     status: str = ""
     create_type: Literal["built-in", "dynamic-built"] = "dynamic-built"
     description: str = ""
-    # for dynamically create worker agents
+    # 用于动态创建工作器 agent
     tool_lists: List[str] = Field(default_factory=list)
     sys_prompt: str = ""
 
@@ -183,6 +182,7 @@ class WorkerInfo(BaseModel):
         mode="before",
     )
     def _stringify(cls, v: Any) -> str:
+        """字符串化验证器"""
         if v is None:
             return ""
         return str(v)
@@ -190,25 +190,25 @@ class WorkerInfo(BaseModel):
 
 class SubTaskSpecification(BaseModel):
     """
-    Details of a subtask within a larger task decomposition.
+    较大任务分解中的子任务详细信息。
     """
 
-    subtask_description: str = Field(description="Description of the subtask.")
+    subtask_description: str = Field(description="子任务的描述。")
     input_intro: str = Field(
         ...,
-        description="Introduction or context for the subtask input.",
+        description="子任务输入的介绍或上下文。",
     )
     exact_input: str = Field(
         ...,
-        description="The exact input data or parameters for the subtask.",
+        description="子任务的确切输入数据或参数。",
     )
     expected_output: str = Field(
         ...,
-        description="The expected output data or parameters for the subtask.",
+        description="子任务的预期输出数据或参数。",
     )
     desired_auxiliary_tools: str = Field(
         ...,
-        description="Tools that would be helpful for this subtask.",
+        description="对此子任务有帮助的工具。",
     )
 
     @field_validator(
@@ -220,6 +220,7 @@ class SubTaskSpecification(BaseModel):
         mode="before",
     )
     def _stringify(cls, v: Any) -> str:
+        """字符串化验证器"""
         if v is None:
             return ""
         return str(v)
@@ -227,21 +228,20 @@ class SubTaskSpecification(BaseModel):
 
 class SubTaskStatus(BaseModel):
     """
-    Represents the status and details of a subtask within a
-    larger task decomposition.
+    表示较大任务分解中子任务的状态和详细信息。
 
-    This class tracks individual subtasks, their execution status,
-    assigned workers, and progress updates throughout the execution lifecycle.
+    此类跟踪各个子任务、它们的执行状态、
+    分配的工作器以及整个执行生命周期中的进度更新。
 
-    Attributes:
+    属性：
         status (Literal["Planned", "In-process", "Done"]):
-            Current execution status.
+            当前执行状态。
         updates (List[Update]):
-            List of progress updates from workers.
+            来自工作器的进度更新列表。
         attempt (int):
-            Number of execution attempts for this subtask.
+            此子任务的执行尝试次数。
         workers (List[WorkerInfo]):
-            List of workers assigned to this subtask.
+            分配给此子任务的工作器列表。
     """
 
     subtask_specification: SubTaskSpecification = Field(
@@ -250,31 +250,26 @@ class SubTaskStatus(BaseModel):
     status: Literal["Planned", "In-process", "Done"] = "Planned"
     updates: List[Update] = Field(
         default_factory=list,
-        description=(
-            "List of updates from workers. MUST be empty list when initialized."
-        ),
+        description=("来自工作器的更新列表。初始化时必须是空列表。"),
     )
     attempt: int = 0
     workers: List[WorkerInfo] = Field(
         default_factory=list,
-        description=(
-            "List of workers that have been assigned to his subtask."
-            "MUST be EMPTY when initialize the subtask."
-        ),
+        description=("已分配给此子任务的工作器列表。初始化子任务时必须为空。"),
     )
 
 
 class RoadMap(BaseModel):
-    """Represents a roadmap for task decomposition and execution tracking.
+    """表示任务分解和执行跟踪的路线图。
 
-    This class manages the overall task breakdown, containing the original task
-    description and a list of decomposed subtasks with their execution status.
+    此类管理整体任务分解，包含原始任务描述
+    以及具有执行状态的已分解子任务列表。
 
-    Attributes:
+    属性：
         original_task (str):
-            The original task description before decomposition.
+            分解前的原始任务描述。
         decomposed_tasks (List[SubTaskStatus]):
-            List of subtasks created from the original task.
+            从原始任务创建的子任务列表。
     """
 
     original_task: str = ""
@@ -283,17 +278,15 @@ class RoadMap(BaseModel):
     def next_unfinished_subtask(
         self,
     ) -> Tuple[Optional[int], Optional[SubTaskStatus]]:
-        """Find the next subtask that is not yet completed.
+        """查找下一个尚未完成的子任务。
 
-        Iterates through the decomposed tasks to find the first subtask
-        with status "Planned" or "In-process".
+        遍历已分解的任务以查找状态为 "Planned" 或 "In-process" 的第一个子任务。
 
-        Returns:
-            Tuple[Optional[int], Optional[SubTaskStatus]]: A tuple containing:
-                - The index of the next unfinished subtask
-                    (None if all tasks are done)
-                - The SubTaskStatus object of the next unfinished subtask
-                    (None if all tasks are done)
+        返回：
+            Tuple[Optional[int], Optional[SubTaskStatus]]: 包含以下内容的元组：
+                - 下一个未完成子任务的索引（如果所有任务都已完成，则为 None）
+                - 下一个未完成子任务的 SubTaskStatus 对象
+                  （如果所有任务都已完成，则为 None）
         """
         for i, subtask in enumerate(self.decomposed_tasks):
             if subtask.status in ["Planned", "In-process"]:
@@ -303,15 +296,15 @@ class RoadMap(BaseModel):
 
 class PlannerNoteBook(BaseModel):
     """
-    Represents a planner notebook.
+    表示规划器笔记本。
 
-    Attributes:
-        time (str): The current time message.
-        user_input (List[str]): List of user inputs.
-        detail_analysis_for_plan (str): Detailed analysis for the plan.
-        roadmap (RoadMap): The roadmap associated with the planner.
-        files (Dict[str, str]): Dictionary of files related to the planner.
-        full_tool_list (dict[str, dict]): Full schema of tools.
+    属性：
+        time (str): 当前时间消息。
+        user_input (List[str]): 用户输入列表。
+        detail_analysis_for_plan (str): 计划的详细分析。
+        roadmap (RoadMap): 与规划器关联的路线图。
+        files (Dict[str, str]): 与规划器相关的文件字典。
+        full_tool_list (dict[str, dict]): 工具的完整模式。
     """
 
     time: str = Field(default_factory=get_current_time_message)

@@ -1,31 +1,29 @@
 # -*- coding: utf-8 -*-
-"""Main entry point for the Meta-planner agent example.
+"""Meta-planner agent 示例的主入口程序
 
-This module provides a conversational interface for the MetaPlanner agent,
-which is designed to handle complex tasks through a planning-execution pattern.
-The agent can break down complex requests into manageable steps and execute
-them using various tools and MCP (Model Context Protocol) clients.
+本模块为 MetaPlanner agent 提供会话式交互界面。
+MetaPlanner 设计用于通过规划-执行模式处理复杂任务。
+该 agent 可以将复杂请求分解为可管理的步骤，并使用各种工具和 MCP（Model Context Protocol）客户端执行。
 
-The key points in this script includes:
-- Setting up MCP clients for external tool integration
-    (Tavily search, filesystem)
-- Configuring toolkits for both planner and worker agents
-- Managing agent state persistence and recovery
-- Providing an interactive chat interface
+本脚本的关键功能包括：
+- 设置 MCP 客户端以进行外部工具集成（Tavily 搜索、文件系统）
+- 为规划器和工作器 agent 配置工具集
+- 管理 agent 状态持久化和恢复
+- 提供交互式聊天界面
 
-Example:
-    Run the agent interactively:
+示例：
+    交互式运行 agent：
         $ python main.py
 
-    Load from a previous state:
+    从之前的状态加载：
         $ python main.py --load_state ./agent-states/run-xxxx/state-xxx.json
 
-Required Environment Variables:
-    ANTHROPIC_API_KEY: API key for Anthropic Claude model
-    TAVILY_API_KEY: API key for Tavily search functionality
+必需的环境变量：
+    ANTHROPIC_API_KEY: Anthropic Claude 模型的 API 密钥
+    TAVILY_API_KEY: Tavily 搜索功能的 API 密钥
 
-Optional Environment Variables:
-    AGENT_OPERATION_DIR: Custom working directory for agent operations
+可选的环境变量：
+    AGENT_OPERATION_DIR: agent 操作的自定义工作目录
 """
 
 import argparse
@@ -51,7 +49,7 @@ from config import config
 from meta_planner import MetaPlanner
 from planning_tools.logfire_utils import configure_logfire
 
-# Configure logfire if enabled
+# 如果启用了 logfire，则进行配置
 if config.enable_logfire:
     configure_logfire()
 
@@ -60,21 +58,20 @@ def chunking_too_long_tool_response(
     tool_use: ToolUseBlock,  # pylint: disable=W0613
     tool_response: ToolResponse,
 ) -> ToolResponse:
-    """Post-process tool responses to prevent content overflow.
+    """对工具响应进行后处理，防止内容溢出
 
-    This function ensures that tool responses don't exceed a predefined budget
-    to prevent overwhelming the model with too much information. It truncates
-    text content while preserving the structure of the response.
+    此函数确保工具响应不会超过预定义的预算，
+    以防止过多的信息淹没模型。它会截断文本内容，同时保留响应的结构。
 
-    Args:
-        tool_use: The tool use block that triggered the response (unused).
-        tool_response: The tool response to potentially truncate.
+    参数：
+        tool_use: 触发响应的工具使用块（未使用）
+        tool_response: 可能需要截断的工具响应
 
-    Note:
-        The budget is configured via TOOL_RESPONSE_BUDGET environment variable
-        to ensure responses remain manageable for the language model.
+    注意：
+        预算通过 TOOL_RESPONSE_BUDGET 环境变量配置，
+        以确保响应对语言模型保持可管理的大小。
     """
-    # Set budget to prevent overwhelming the model with too much content
+    # 设置预算以防止用过多内容淹没模型
     budget = config.tool_response_budget
 
     for i, block in enumerate(tool_response.content):
@@ -82,14 +79,14 @@ def chunking_too_long_tool_response(
             text = block["text"]
             text_len = len(text)
 
-            # If budget is exhausted, truncate remaining blocks
+            # 如果预算已耗尽，截断剩余的块
             if budget <= 0:
                 tool_response.content = tool_response.content[:i]
                 break
 
-            # If this block exceeds remaining budget, truncate it
+            # 如果此块超过剩余预算，则截断它
             if text_len > budget:
-                # Calculate truncation threshold (80% of proportional budget)
+                # 计算截断阈值（比例预算的 80%）
                 threshold = int(budget / text_len * len(text) * 0.8)
                 tool_response.content[i]["text"] = text[:threshold]
 
@@ -99,17 +96,16 @@ def chunking_too_long_tool_response(
 
 
 def _add_tool_postprocessing_func(worker_toolkit: Toolkit) -> None:
-    """Add postprocessing functions to specific tools in the worker toolkit.
+    """为工作器工具集中的特定工具添加后处理函数
 
-    This function applies content truncation to tools that might return
-    large amounts of data, specifically Tavily search tools, to prevent
-    overwhelming the language model.
+    此函数对可能返回大量数据的工具应用内容截断，
+    特别是 Tavily 搜索工具，以防止淹没语言模型。
 
-    Args:
-        worker_toolkit: The toolkit containing worker tools to modify.
+    参数：
+        worker_toolkit: 包含要修改的工作器工具的工具集
     """
     for tool_func, _ in worker_toolkit.tools.items():
-        # Apply truncation to Tavily search tools
+        # 对 Tavily 搜索工具应用截断
         if tool_func.startswith("tavily"):
             worker_toolkit.tools[
                 tool_func
@@ -117,17 +113,20 @@ def _add_tool_postprocessing_func(worker_toolkit: Toolkit) -> None:
 
 
 async def main() -> None:
-    """The main entry point for the Meta-planner agent example."""
+    """Meta-planner agent 示例的主入口函数"""
     logger.setLevel(config.log_level)
     time_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    planner_toolkit = Toolkit()
-    worker_toolkit = Toolkit()
-    worker_toolkit.register_tool_function(execute_shell_command)
-    worker_toolkit.register_tool_function(view_text_file)
-    mcp_clients = []
+    # 初始化工具集
+    planner_toolkit = Toolkit()  # 规划器工具集
+    worker_toolkit = Toolkit()  # 工作器工具集
+    worker_toolkit.register_tool_function(
+        execute_shell_command
+    )  # 注册 shell 命令执行工具
+    worker_toolkit.register_tool_function(view_text_file)  # 注册文本文件查看工具
+    mcp_clients = []  # MCP 客户端列表
 
-    # Setup Tavily MCP client for search functionality
+    # 设置 Tavily MCP 客户端用于搜索功能
     mcp_clients.append(
         StdIOStatefulClient(
             name="tavily_mcp",
@@ -137,13 +136,13 @@ async def main() -> None:
         ),
     )
 
-    # Note: You can add more MCP/tools for more diverse tasks
+    # 注意：你可以添加更多 MCP/工具来支持更多样化的任务
 
-    # Setup working directory for agent operations
+    # 设置 agent 操作的工作目录
     agent_working_dir = config.get_agent_working_dir()
     os.makedirs(agent_working_dir, exist_ok=True)
 
-    # Setup filesystem MCP client
+    # 设置文件系统 MCP 客户端
     mcp_clients.append(
         StdIOStatefulClient(
             name="file_system_mcp",
@@ -156,50 +155,49 @@ async def main() -> None:
         ),
     )
 
-    
     try:
-        # Connect and register each MCP client individually with error handling
+        # 单独连接并注册每个 MCP 客户端，带有错误处理
         connected_clients = []
         for mcp_client in mcp_clients:
             try:
                 if isinstance(mcp_client, StatefulClientBase):
-                    logger.info(f"Connecting MCP client: {mcp_client.name}")
+                    logger.info(f"正在连接 MCP 客户端：{mcp_client.name}")
                     await mcp_client.connect()
-                    logger.info(f"Successfully connected MCP client: {mcp_client.name}")
-                
-                logger.info(f"Registering tools from MCP client: {mcp_client.name}")
+                    logger.info(f"成功连接 MCP 客户端：{mcp_client.name}")
+
+                logger.info(f"正在从 MCP 客户端注册工具：{mcp_client.name}")
                 await worker_toolkit.register_mcp_client(mcp_client)
-                logger.info(f"Successfully registered tools from: {mcp_client.name}")
-                
+                logger.info(f"成功从以下客户端注册工具：{mcp_client.name}")
+
                 connected_clients.append(mcp_client)
-                
+
             except Exception as e:
                 logger.error(
-                    f"Failed to initialize MCP client '{mcp_client.name}': {e}",
-                    exc_info=True
+                    f"初始化 MCP 客户端 '{mcp_client.name}' 失败：{e}", exc_info=True
                 )
-                # Attempt to close the failed client
+                # 尝试关闭失败的客户端
                 try:
                     if isinstance(mcp_client, StatefulClientBase):
                         await mcp_client.close()
                 except Exception as close_error:
                     logger.warning(
-                        f"Error closing failed MCP client '{mcp_client.name}': {close_error}"
+                        f"关闭失败的 MCP 客户端 '{mcp_client.name}' 时出错：{close_error}"
                     )
-                # Continue with other clients instead of failing completely
+                # 继续处理其他客户端，而不是完全失败
                 continue
-        
-        # Update mcp_clients to only include successfully connected ones
+
+        # 更新 mcp_clients 为仅包含成功连接的客户端
         mcp_clients = connected_clients
-        
+
         if not mcp_clients:
             logger.warning(
-                "No MCP clients were successfully initialized. "
-                "Agent will run with limited tool capabilities."
+                "没有成功初始化任何 MCP 客户端。Agent 将以有限的工具能力运行。"
             )
 
+        # 为工作器工具集添加后处理函数
         _add_tool_postprocessing_func(worker_toolkit)
 
+        # 创建 MetaPlanner agent
         agent = MetaPlanner(
             name=config.agent_name,
             model=OpenAIChatModel(
@@ -221,9 +219,12 @@ async def main() -> None:
             max_iters=config.agent_max_iters,
             planner_mode=config.planner_mode,
         )
+        # 创建用户 agent
         user = UserAgent("Simon")
         msg = None
         skip_user_input = False
+
+        # 如果指定了加载状态，则从状态文件恢复
         if args.load_state:
             state_file_path = args.load_state
             with open(state_file_path, "r", encoding="utf-8") as f:
@@ -232,6 +233,17 @@ async def main() -> None:
             agent.resume_planner_tools()
             skip_user_input = True
 
+        # 打印工具集的 JSON schemas（用于调试）
+        print(
+            json.dumps(planner_toolkit.get_json_schemas(), indent=4, ensure_ascii=False)
+        )
+        print("====================================================")
+        print(
+            json.dumps(worker_toolkit.get_json_schemas(), indent=4, ensure_ascii=False)
+        )
+        print("====================================================")
+
+        # 主交互循环
         while True:
             if skip_user_input:
                 skip_user_input = False
@@ -244,28 +256,28 @@ async def main() -> None:
     except Exception as e:
         logger.exception(e)
     finally:
-        # Clean up MCP clients individually
+        # 单独清理每个 MCP 客户端
         for mcp_client in mcp_clients:
             if isinstance(mcp_client, StatefulClientBase):
                 try:
-                    logger.info(f"Closing MCP client: {mcp_client.name}")
+                    logger.info(f"正在关闭 MCP 客户端：{mcp_client.name}")
                     await mcp_client.close()
-                    logger.info(f"Successfully closed MCP client: {mcp_client.name}")
+                    logger.info(f"成功关闭 MCP 客户端：{mcp_client.name}")
                 except Exception as cleanup_error:
                     logger.warning(
-                        f"Error during cleanup of MCP client '{mcp_client.name}': {cleanup_error}"
+                        f"清理 MCP 客户端 '{mcp_client.name}' 时出错：{cleanup_error}"
                     )
 
 
 def parse_args() -> argparse.Namespace:
-    """parsing args from command line"""
+    """解析命令行参数"""
     parser = argparse.ArgumentParser(
-        description="Run the ReAct agent example with a specified state.",
+        description="使用指定状态运行 ReAct agent 示例。",
     )
     parser.add_argument(
         "--load_state",
         type=str,
-        help="The input file name to load the state from.",
+        help="用于加载状态的输入文件名。",
     )
     return parser.parse_args()
 

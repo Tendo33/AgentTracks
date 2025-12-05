@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Planning handler module for meta planner
+元规划器的规划处理模块
 """
 
 from typing import Literal, Optional
@@ -18,21 +18,20 @@ from .planning_notebook import (
 
 
 class RoadmapManager(StateModule):
-    """Handles planning operations for meta planner agent.
+    """处理元规划器 agent 的规划操作。
 
-    This class provides functionality for task decomposition, roadmap creation,
-    and roadmap revision.
+    此类提供任务分解、路线图创建和路线图修订的功能。
     """
 
     def __init__(
         self,
         planner_notebook: PlannerNoteBook,
     ):
-        """Initialize the PlanningHandler.
+        """初始化 PlanningHandler。
 
-        Args:
+        参数：
             planner_notebook (PlannerNoteBook):
-                Data structure containing planning state.
+                包含规划状态的数据结构。
         """
         super().__init__()
         self.planner_notebook = planner_notebook

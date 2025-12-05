@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Coordination handler module for meta planner
+元规划器的协调处理模块
 """
 
 import json
@@ -34,42 +34,43 @@ def rebuild_reactworker(
     exclude_tools: Optional[list[str]] = None,
 ) -> ReActAgent:
     """
-    Rebuild a ReActAgent worker with specified configuration and tools.
+    使用指定的配置和工具重建 ReActAgent 工作器。
 
-    Creates a new ReActAgent using worker information and toolkit
-    configuration. Tools are shared from the old toolkit to the new one,
-    excluding any specified tools.
+    使用工作器信息和工具集配置创建新的 ReActAgent。
+    工具从旧工具集共享到新工具集，排除任何指定的工具。
 
-    Args:
-        worker_info (WorkerInfo): Information about the worker including name,
-            system prompt, and tool lists.
-        old_toolkit (Toolkit): Source toolkit containing available tools.
-        new_toolkit (Toolkit): Destination toolkit to receive shared tools.
-        memory (Optional[MemoryBase], optional): Memory instance for the agent.
-            Defaults to InMemoryMemory() if None.
-        model (Optional[ChatModelBase], optional): Chat model instance.
-            Defaults to OpenAIChatModel with gpt-4o-mini if None.
-        formatter (Optional[FormatterBase], optional): Message formatter.
-            Defaults to OpenAIChatFormatter() if None.
-        exclude_tools (Optional[list[str]], optional): List of tool names to
-            exclude from sharing. Defaults to empty list if None.
+    参数：
+        worker_info (WorkerInfo): 有关工作器的信息，包括名称、系统提示和工具列表。
+        old_toolkit (Toolkit): 包含可用工具的源工具集。
+        new_toolkit (Toolkit): 接收共享工具的目标工具集。
+        memory (Optional[MemoryBase], optional): agent 的内存实例。
+            如果为 None，则默认为 InMemoryMemory()。
+        model (Optional[ChatModelBase], optional): 聊天模型实例。
+            如果为 None，则默认为使用 gpt-4o-mini 的 OpenAIChatModel。
+        formatter (Optional[FormatterBase], optional): 消息格式化器。
+            如果为 None，则默认为 OpenAIChatFormatter()。
+        exclude_tools (Optional[list[str]], optional): 要从共享中排除的工具名称列表。
+            如果为 None，则默认为空列表。
 
-    Returns:
-        ReActAgent: A configured ReActAgent instance ready for use.
+    返回：
+        ReActAgent: 配置好的 ReActAgent 实例，可以使用。
 
-    Note:
-        - The default model uses the OPENAI_API_KEY environment variable
-        - Tools are shared based on worker_info.tool_lists minus excluded tools
-        - The agent is configured with thinking enabled and streaming support
+    注意：
+        - 默认模型使用 OPENAI_API_KEY 环境变量
+        - 工具基于 worker_info.tool_lists 减去排除的工具进行共享
+        - agent 配置为启用思考和流式支持
     """
     if exclude_tools is None:
         exclude_tools = []
+    # 构建工具列表，排除指定的工具
     tool_list = [
         tool_name
         for tool_name in worker_info.tool_lists
         if tool_name not in exclude_tools
     ]
+    # 将工具从旧工具集共享到新工具集
     share_tools(old_toolkit, new_toolkit, tool_list)
+    # 尝试从配置中获取最大迭代次数
     try:
         from config import config as agent_config
 
@@ -77,6 +78,7 @@ def rebuild_reactworker(
     except ImportError:
         max_iters = int(os.environ.get("AGENT_WORKER_MAX_ITERS", "20"))
 
+    # 创建并返回 ReActAgent
     return ReActAgent(
         name=worker_info.worker_name,
         sys_prompt=worker_info.sys_prompt,
@@ -90,24 +92,22 @@ def rebuild_reactworker(
 
 async def check_file_existence(file_path: str, toolkit: Toolkit) -> bool:
     """
-    Check if a file exists using the read_file tool from the provided toolkit.
+    使用提供的工具集中的 read_file 工具检查文件是否存在。
 
-    This function attempts to verify file existence by calling the read_file
-    tool and checking the response for error indicators. It requires the
-    toolkit to have a 'read_file' tool available.
+    此函数尝试通过调用 read_file 工具并检查响应中的错误指示符来验证文件是否存在。
+    它要求工具集具有可用的 'read_file' 工具。
 
-    Args:
-        file_path (str): The path to the file to check for existence.
-        toolkit (Toolkit): The toolkit containing the read_file tool.
+    参数：
+        file_path (str): 要检查是否存在的文件路径。
+        toolkit (Toolkit): 包含 read_file 工具的工具集。
 
-    Returns:
-        bool: True if the file exists and is readable, False otherwise.
+    返回：
+        bool: 如果文件存在且可读，则为 True，否则为 False。
 
-    Note:
-        - Returns False if the 'read_file' tool is not available in the toolkit
-        - Returns False if any exception occurs during the file read attempt
-        - Uses error message detection ("no such file or directory") to
-            determine existence
+    注意：
+        - 如果工具集中没有 'read_file' 工具，则返回 False
+        - 如果在文件读取尝试期间发生任何异常，则返回 False
+        - 使用错误消息检测（"no such file or directory"）来确定是否存在
     """
     if "read_file" in toolkit.tools:
         params = {
@@ -155,46 +155,44 @@ def share_tools(
     tool_list: list[str],
 ) -> None:
     """
-    Share specified tools from an old toolkit to a new toolkit.
+    将指定的工具从旧工具集共享到新工具集。
 
-    This function copies tools from one toolkit to another based on the
-    provided tool list. If a tool doesn't exist in the old toolkit,
-    a warning is logged.
+    此函数根据提供的工具列表将工具从一个工具集复制到另一个工具集。
+    如果工具在旧工具集中不存在，则记录警告。
 
-    Args:
+    参数：
         old_toolkit (Toolkit):
-            The source toolkit containing tools to be shared.
+            包含要共享的工具的源工具集。
         new_toolkit (Toolkit):
-            The destination toolkit to receive the tools.
+            接收工具的目标工具集。
         tool_list (list[str]):
-            List of tool names to be copied from old to new toolkit.
+            要从旧工具集复制到新工具集的工具名称列表。
 
-    Returns:
+    返回：
         None
 
-    Note:
-        This function modifies the new_toolkit in place.
-        If a tool in tool_list is not found in old_toolkit,
-        a warning is logged but execution continues.
+    注意：
+        此函数就地修改 new_toolkit。
+        如果在 old_toolkit 中找不到 tool_list 中的工具，
+        则记录警告但继续执行。
     """
     for tool in tool_list:
         if tool in old_toolkit.tools and tool not in new_toolkit.tools:
             new_toolkit.tools[tool] = old_toolkit.tools[tool]
         else:
             logger.warning(
-                "No tool %s in the provided worker_tool_toolkit",
+                "提供的 worker_tool_toolkit 中没有工具 %s",
                 tool,
             )
 
 
 class WorkerManager(StateModule):
     """
-    Handles coordination between meta planner and worker agents.
+    处理元规划器和工作器 agent 之间的协调。
 
-    This class manages the creation, selection, and execution of worker agents
-    to accomplish subtasks in a roadmap. It provides functionality for dynamic
-    worker creation, worker selection based on task requirements, and
-    processing worker responses to update the overall task progress.
+    此类管理工作器 agent 的创建、选择和执行，以完成路线图中的子任务。
+    它提供动态工作器创建、基于任务需求的工作器选择以及
+    处理工作器响应以更新整体任务进度的功能。
     """
 
     def __init__(
@@ -206,20 +204,20 @@ class WorkerManager(StateModule):
         agent_working_dir: str,
         worker_pool: Optional[dict[str, tuple[WorkerInfo, ReActAgent]]] = None,
     ):
-        """Initialize the CoordinationHandler.
-        Args:
+        """初始化 CoordinationHandler。
+        参数：
             worker_model (ChatModelBase):
-                Main language model for coordination decisions
+                用于协调决策的主要语言模型
             worker_formatter (FormatterBase):
-                Message formatter for model communication
+                用于模型通信的消息格式化器
             planner_notebook (PlannerNoteBook):
-                Notebook containing roadmap and file information
+                包含路线图和文件信息的笔记本
             worker_full_toolkit (Toolkit):
-                Complete toolkit available to workers
+                工作器可用的完整工具集
             agent_working_dir (str):
-                Working directory for the agent operations
+                agent 操作的工作目录
             worker_pool: dict[str, tuple[WorkerInfo, ReActAgent]]:
-                workers that has already been created
+                已创建的工作器
         """
         super().__init__()
         self.planner_notebook = planner_notebook
@@ -232,6 +230,7 @@ class WorkerManager(StateModule):
         self.worker_full_toolkit = worker_full_toolkit
 
         def reconstruct_workerpool(worker_pool_dict: dict) -> dict:
+            """重建工作器池的辅助函数"""
             rebuild_worker_pool = {}
             for k, v in worker_pool_dict.items():
                 worker_info = WorkerInfo(**v)
@@ -248,6 +247,7 @@ class WorkerManager(StateModule):
                 )
             return rebuild_worker_pool
 
+        # 注册工作器池状态
         self.register_state(
             "worker_pool",
             lambda x: {k: v[0].model_dump() for k, v in x.items()},
@@ -261,18 +261,18 @@ class WorkerManager(StateModule):
         worker_type: Literal["built-in", "dynamic-built"] = "dynamic",
     ) -> None:
         """
-        Register a worker agent in the worker pool.
+        在工作器池中注册工作器 agent。
 
-        Adds a worker agent to the available pool with appropriate metadata.
-        Handles name conflicts by appending version numbers when necessary.
+        将工作器 agent 添加到可用池中，并带有适当的元数据。
+        必要时通过附加版本号来处理名称冲突。
 
-        Args:
+        参数：
             agent (ReActAgent):
-                The worker agent to register
+                要注册的工作器 agent
             description (Optional[str]):
-                Description of the worker's capabilities
+                工作器能力的描述
             worker_type (Literal["built-in", "dynamic-built"]):
-                Type of worker agent
+                工作器 agent 的类型
         """
         worker_info = WorkerInfo(
             worker_name=agent.name,
@@ -284,6 +284,7 @@ class WorkerManager(StateModule):
             worker_info.sys_prompt = agent.sys_prompt
             worker_info.tool_lists = list(agent.toolkit.tools.keys())
 
+        # 处理名称冲突
         if agent.name in self.worker_pool:
             name = agent.name
             version = 1
@@ -298,10 +299,10 @@ class WorkerManager(StateModule):
     @staticmethod
     def _no_more_subtask_return() -> ToolResponse:
         """
-        Return response when no more unfinished subtasks exist.
+        当不存在更多未完成的子任务时返回响应。
 
-        Returns:
-            ToolResponse: Response indicating no more subtasks are available
+        返回：
+            ToolResponse: 指示没有更多可用子任务的响应
         """
         return ToolResponse(
             metadata={"success": False},
