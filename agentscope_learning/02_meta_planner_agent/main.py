@@ -50,8 +50,8 @@ from meta_planner import MetaPlanner
 from planning_tools.logfire_utils import configure_logfire
 
 # 如果启用了 logfire，则进行配置
-if config.enable_logfire:
-    configure_logfire()
+configure_logfire()
+print("Logfire configured")
 
 
 def chunking_too_long_tool_response(

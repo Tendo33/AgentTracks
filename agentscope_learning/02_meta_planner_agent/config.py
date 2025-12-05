@@ -112,7 +112,7 @@ class MetaPlannerConfig:
     # Logging Configuration
     # ============================================================================
     log_level: str = "DEBUG"
-    enable_logfire: bool = False
+    enable_logfire: bool = True
 
     # ============================================================================
     # MCP Configuration
